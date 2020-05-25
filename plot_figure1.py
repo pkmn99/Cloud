@@ -114,7 +114,7 @@ def make_plot():
     ax2.fill_betweenx(pot_pos_lat[0,:], -pot_pos_lat[4,:], -pot_pos_lat[5,:], facecolor='#D2D2D2',edgecolor='none', alpha=0.8, label='Negative')
     # Legend
     h1, l1 = ax2.get_legend_handles_labels()
-    ax2.legend(h1[0:2],['Positive','Negative'],loc='upper right',fontsize='small',frameon=False,
+    ax2.legend(h1[0:2],['Suppress','Enhance'],loc='upper right',fontsize='small',frameon=False,
                        handlelength=1,handletextpad=0.25)
     
     ax2.plot([0,0],[-60,80],'--',lw=1,color='black') # zero line
@@ -152,7 +152,7 @@ def make_plot():
     ax3b.fill_betweenx(pot_pos_lat_msg[0,:], -pot_pos_lat_msg[4,:], -pot_pos_lat_msg[5,:], facecolor='#D2D2D2',edgecolor='none', alpha=0.8, label='Negative')
     # Legend
     h1, l1 = ax3b.get_legend_handles_labels()
-    ax3b.legend(h1[0:3],['Positive','Negative'],loc=[0.5,0.5],fontsize='small',frameon=False,
+    ax3b.legend(h1[0:3],['Suppress','Enhance'],loc=[0.5,0.5],fontsize='small',frameon=False,
                                handlelength=1,handletextpad=0.25)
 
     ax3b.plot([0,0],[-30,60],'--',lw=1,color='black') # zero line
@@ -209,6 +209,8 @@ def make_plot():
     cb1 = mpl.colorbar.ColorbarBase(ax=cax1, cmap=mycmap, norm=Normalize(vmin=-0.15, vmax=0.15),
                                                                  orientation='horizontal', ticks=np.arange(-0.15, 0.16, 0.05)) #cmap=plt.get_cmap('hot')
     cb1.set_label('$\Delta$Cloud', fontsize=12)
+    cax1.text(-0.1,0.5,'More cloud\n over forest', transform=cax1.transAxes, color='b',ha='center',va='center',fontsize=10)
+    cax1.text(1.1,0.5,'Less cloud\n over forest',transform=cax1.transAxes, color='r',ha='center',va='center',fontsize=10)
     
 #    # Colorbar for panel C
 #    cbar3_pos = [ax3.get_position().x1+0.025, ax3.get_position().y0, 0.01, ax3.get_position().height]
@@ -240,7 +242,7 @@ def make_plot():
     ax4.set_title('Local hour of maximum impact')
     
     # plt.savefig('../figure/figure1.pdf', bbox_inches='tight')
-    plt.savefig('../figure/figure1_0513.png', dpi=300, bbox_inches='tight')
+    plt.savefig('../figure/figure1_0525.png', dpi=300, bbox_inches='tight')
     
     print('Figure saved')
 
