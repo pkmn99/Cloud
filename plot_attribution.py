@@ -13,7 +13,8 @@ msgatt=xr.open_dataset('../data/results/xu/MSG_attribu_new.nc')
 
 # Plot figure
 # MODIS Panel 
-discmap5 = mpl.colors.ListedColormap(['red', 'blue','yellow', 'lime','tab:pink'])
+#discmap5 = mpl.colors.ListedColormap(['red', 'blue','yellow', 'lime','tab:pink'])
+discmap5 = mpl.colors.ListedColormap(['blue','red','lime','yellow','tab:pink'])
 fig = plt.figure(figsize=[10,5])
 pos1 = [0.05, 0.1, 1, 1] # [left, bottom, width, height]
 ax1 = fig.add_axes(pos1, projection=ccrs.PlateCarree())
@@ -31,7 +32,7 @@ cb1 = mpl.colorbar.ColorbarBase(ax=cax1, cmap=discmap5, norm=Normalize(vmin=1, v
 cb1.ax.set_yticklabels(['Tree+\n(43%)','Tree$-$\n(23%)','Orography+\n(16%)','Orography$-$\n(11%)',
                         'Others\n(8%)'], fontsize=10)
 cb1.ax.invert_yaxis()
-ax1.set_title('Attribution of potential impact of forests on cloud (MODIS)')
+ax1.set_title('Attribution of potential cloud impact of forest (MODIS)')
 
 
 # MSG Panel 
@@ -43,6 +44,6 @@ ax2.coastlines()
 ax2.set_title('MSG')
 
 #plt.savefig('../figure/figure_attribution.pdf',bbox_inches='tight')
-plt.savefig('../figure/figure_attribution.png',dpi=300,bbox_inches='tight')
+plt.savefig('../figure/figure_attribution_0525.png',dpi=300,bbox_inches='tight')
 
 print('Figure saved')
