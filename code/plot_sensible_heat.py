@@ -9,27 +9,30 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from matplotlib.colors import Normalize
 from matplotlib.patches import Ellipse
-from plot_figure1 import get_myjet_cmap 
+from plot_potential_impact import get_myjet_cmap 
 
 def load_flux_data(rerun=False):
     if rerun:
-        cloud=xr.open_dataset('../data/results/potential_1deg_noelemask.nc')# 1deg cloud effect
-        flux_h=pd.read_csv('../data/H_diff.csv')
+       # cloud=xr.open_dataset('../data/results/potential_1deg_noelemask.nc')# 1deg cloud effect
+        cloud=xr.open_dataset('../data/results/xu/potential_one_deg.nc')# 1deg cloud effect
+         
+        flux_h=pd.read_csv('../data/H_diff.csv') # Add two pair amazon flux sites
         # Add mean lat/lon for paired sites
         flux_h.loc[:,'lat_mean']=flux_h.loc[:,['pair_open_lat','pair_forest_lat']].mean(axis=1)
         flux_h.loc[:,'lon_mean']=flux_h.loc[:,['pair_open_lon','pair_forest_lon']].mean(axis=1)
         # Add continent label 
         ind=(flux_h['lon_mean']>-130) & (flux_h['lon_mean']<-60)&(flux_h['lat_mean']>0) & (flux_h['lat_mean']<65)
-        flux_h.loc[ind,'region']='NA'
+        flux_h.loc[ind,'region']='NoA'
         ind=(flux_h['lon_mean']>0) & (flux_h['lon_mean']<60)&(flux_h['lat_mean']>30) & (flux_h['lat_mean']<70)
         flux_h.loc[ind,'region']='EU'
         flux_h.loc[14,'region']='AU'
+        flux_h.loc[28:29,'region']='AM'
         # append delta cloud value 
-        temp = [cloud.potential.sel(lat=flux_h['lat_mean'][i], lon=flux_h['lon_mean'][i], method='nearest').values for i in range(28)]
+        temp = [cloud.potential.sel(lat=flux_h['lat_mean'][i], lon=flux_h['lon_mean'][i], method='nearest').values for i in range(flux_h.shape[0])]
         flux_h.loc[:,'cloud_diff'] =-np.array(temp)
 
         # Group sites in close distance for plotting
-        c = [1] + [2] + [3]*2 + [5]*4 + [9]*2 + [11] +[12]*3 + [15] + [16]*2 + [18,19,20] + [16,22] +[3]*2 + [25]*2 + [27,28]
+        c = [1] + [2] + [3]*2 + [5]*4 + [9]*2 + [11] +[12]*3 + [15] + [16]*2 + [18,19,20] + [16,22] +[3]*2 + [25]*2 + [27,28,29,30]
         flux_h.loc[:,'group']=c
         # Add group number to each site pair
         flux_h=flux_h.join(flux_h.groupby('group')['pair'].count().rename('group_num'), on='group')
@@ -75,7 +78,7 @@ def make_plot():
     msg14=xr.open_dataset('../data/results/msg_potential_1400.nc')
     h_sa=xr.open_dataset('../data/results/xu/HG_det.nc')
     h_clm=xr.open_dataset('../data/results/xu/CLM_SH.nc')
-    flux_h=load_flux_data(rerun=False)
+    flux_h=load_flux_data(rerun=True)
     mycmap=get_myjet_cmap()
 
     fig = plt.figure(figsize=[10,6])
@@ -150,7 +153,7 @@ def make_plot():
     ax4 = fig.add_axes(pos4,projection=ccrs.PlateCarree())
     ind1=(flux_h['group_num']>1)
 #    ind=(flux_h['lon_mean']>-130) & (flux_h['lon_mean']<-60)&(flux_h['lat_mean']>0) & (flux_h['lat_mean']<65)
-    ind=flux_h['region']=='NA'
+    ind=flux_h['region']=='NoA'
 
     # Plot connecting lines
     for i in flux_h[ind1&ind].group.unique():
@@ -221,7 +224,9 @@ def make_plot():
     ax6 = fig.add_axes(pos6)
 
     with sns.axes_style("ticks"):
-        sns.scatterplot(x="dif", y="cloud_diff", data=flux_h,s=45, ax=ax6)
+     #   sns.scatterplot(x="dif", y="cloud_diff", data=flux_h,s=45, ax=ax6)
+        sns.scatterplot(x="dif", y="cloud_diff", data=flux_h,hue='region',ax=ax6)
+    ax6.legend(ax6.get_legend_handles_labels()[0][1::], ['Europe','North America','Australia','Amazon'],frameon=False)
 
     ax6.plot(np.arange(-120,100,1), results.predict(sm.add_constant(np.arange(-120,100,1))),color='r')
     ax6.plot([-130,100],[0,0],'--',lw=0.5,color='grey')
@@ -238,8 +243,9 @@ def make_plot():
     ax6.text(-0.02, 1.05, 'd', fontsize=14, transform=ax6.transAxes, fontweight='bold')
 
 
-    plt.savefig('../figure/figure_sensible_heat0514.png',dpi=300,bbox_inches='tight')
+    plt.savefig('../figure/figure_sensible_heat0616.png',dpi=300,bbox_inches='tight')
     print('figure saved')
 
 if __name__=='__main__':
     make_plot()
+#    flux_h=load_flux_data(rerun=True)
