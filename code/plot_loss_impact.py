@@ -110,14 +110,16 @@ def move_left(ax, offset=0.05):
 def make_plot():
     # Load data
     loss_yearly=xr.open_dataset('../data/results/xu/forest_loss_effect_year.nc')
-    floss=xr.open_dataset('../data/results/forestloss_2018_05deg.nc')
     trend=xr.open_dataset('../data/results/xu/forest_loss_impact_based_on_trend.nc')
     ds05=xr.open_dataset('../data/results/xu/result.nc')
 
-    floss_diff_yearly=xr.open_dataset('../data/results/forest_loss_diff_yearly_05deg.nc')
-    floss_base_diff=xr.open_dataset('../data/results/treecover_baseline_loss_05deg.nc')
-    tree_diff = floss_base_diff.tree_diff-floss_diff_yearly.forest_loss.cumsum(dim='time') # Baseyear delta tree - delta loss to get tree diff
-    tree_diff.time.values=range(2001,2019,1) 
+   # floss=xr.open_dataset('../data/results/forestloss_2018_05deg.nc') # old data
+   # floss=xr.open_dataset('../data/results/net_loss_2018_05deg.nc')
+    floss=xr.open_dataset('../data/results/loss_2018_05deg.nc') # gross loss
+    floss_diff_yearly=xr.open_dataset('../data/results/xu/loss_diff_yearly_05deg.nc')
+    floss_base_diff=xr.open_dataset('../data/results/xu/loss_basetree_diff_05deg.nc')
+    tree_diff = floss_base_diff.tree_diff-floss_diff_yearly.loss_diff.cumsum(dim='time') # Baseyear delta tree - delta loss to get tree diff
+#    tree_diff.time.values=range(2001,2019,1) 
 
     # jet cmap
     mycmap=get_myjet_cmap()
@@ -337,7 +339,7 @@ def make_plot():
         else:
             plot_subplot_label(a, panel_txt[i])
        
-    plt.savefig('../figure/figure_floss0619.png',dpi=300,bbox_inches='tight')
+    plt.savefig('../figure/figure_floss0623.png',dpi=300,bbox_inches='tight')
 #    plt.savefig('../figure/figure_floss.pdf',bbox_inches='tight')
     print('Figure saved')
 
