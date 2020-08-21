@@ -11,9 +11,20 @@ import cartopy.feature as cfeature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
-def get_myjet_cmap():
-    mycmap=np.genfromtxt('../data/jet_blue_red_colormap.csv',delimiter=',')
-    return ListedColormap(mycmap)
+#def get_myjet_cmap():
+#    mycmap=np.genfromtxt('../data/jet_blue_red_colormap.csv',delimiter=',')
+#    return ListedColormap(mycmap)
+
+def get_myjet_cmap(levels=False,left_offset=0, right_offset=0):
+    mycmap=np.genfromtxt('../data/jet_blue_red_colormap.csv', delimiter=',')
+    if levels.any():
+        n1=np.floor(np.linspace(127, 0, num=np.int(levels.shape[0]/2)))
+        n2=np.floor(np.linspace(128, 255, num=np.int(levels.shape[0]/2)))
+        if right_offset!=0:
+            n=np.concatenate([n1[::-1],n2[0:-right_offset]]).astype(int)
+        else:
+            n=np.concatenate([n1[::-1],n2]).astype(int)
+    return ListedColormap(mycmap[n])
 
 # Reproduce latitude statistics from matlab, data should be numpy data array
 def lat_pattern(data):
@@ -83,15 +94,16 @@ def make_plot():
     v3=np.round(f1[0][12:18].sum()*100,0)
     v4=np.round(f1[0][18:24].sum()*100,0)
     # jet cmap
-    mycmap=get_myjet_cmap()
+    mycmap=get_myjet_cmap(levels=np.arange(-0.15,0.151,0.0125))
+    mycmap_msg=get_myjet_cmap(levels=np.arange(-0.15,0.151,0.0125),right_offset=2)
     
     fig = plt.figure(figsize=(10,9))
     ####################### Panel A
     pos1 = [0.05, 0.6, 0.70, 0.35] # [left, bottom, width, height]
     ax1 = fig.add_axes(pos1, projection=ccrs.PlateCarree())
-    (-ds05.potential).plot.pcolormesh(ax=ax1, vmax=0.15,vmin=-0.15, 
-                                    transform=ccrs.PlateCarree(), 
-                                    cmap=mycmap,add_colorbar=False, rasterized=True)
+    (-ds05.potential).plot(ax=ax1, vmax=0.15,vmin=-0.15, 
+                           levels=np.arange(-0.15, 0.151,0.0125), transform=ccrs.PlateCarree(), 
+                           cmap=mycmap,add_colorbar=False, rasterized=True)
     ax1.set_ylabel('')
     ax1.set_xlabel('')
     
@@ -114,7 +126,7 @@ def make_plot():
     ax2.fill_betweenx(pot_pos_lat[0,:], -pot_pos_lat[4,:], -pot_pos_lat[5,:], facecolor='#D2D2D2',edgecolor='none', alpha=0.8, label='Negative')
     # Legend
     h1, l1 = ax2.get_legend_handles_labels()
-    ax2.legend(h1[0:2],['Suppress','Enhance'],loc='upper right',fontsize='small',frameon=False,
+    ax2.legend(h1[0:2],['Positive','Negative'],loc='upper right',fontsize='small',frameon=False,
                        handlelength=1,handletextpad=0.25)
     
     ax2.plot([0,0],[-60,80],'--',lw=1,color='black') # zero line
@@ -133,8 +145,8 @@ def make_plot():
     pos3 = [0.05, 0.125, 0.3, 0.5] # [left, bottom, width, height] #
     ax3 = fig.add_axes(pos3, projection=ccrs.PlateCarree())
     
-    (-msg14.potential).plot(cmap=mycmap,vmin=-0.15, vmax=0.15,
-                         transform=ccrs.PlateCarree(),add_colorbar=False,rasterized=True)
+    (-msg14.potential).plot(levels=np.arange(-0.15, 0.151,0.025), vmin=-0.15, vmax=0.15,cmap=mycmap_msg,
+                            transform=ccrs.PlateCarree(),add_colorbar=False,rasterized=True)
     
     ax3.set_extent([-70, 60, -20, 45])
     ax3.coastlines()
@@ -152,7 +164,7 @@ def make_plot():
     ax3b.fill_betweenx(pot_pos_lat_msg[0,:], -pot_pos_lat_msg[4,:], -pot_pos_lat_msg[5,:], facecolor='#D2D2D2',edgecolor='none', alpha=0.8, label='Negative')
     # Legend
     h1, l1 = ax3b.get_legend_handles_labels()
-    ax3b.legend(h1[0:3],['Suppress','Enhance'],loc=[0.5,0.5],fontsize='small',frameon=False,
+    ax3b.legend(h1[0:3],['Positive','Negative'],loc=[0.5,0.5],fontsize='small',frameon=False,
                                handlelength=1,handletextpad=0.25)
 
     ax3b.plot([0,0],[-30,60],'--',lw=1,color='black') # zero line
@@ -207,7 +219,7 @@ def make_plot():
     cbar1_pos = [ax1.get_position().x0+ax1.get_position().width*0.15, ax1.get_position().y0-0.04,  ax1.get_position().width*0.7, 0.01]
     cax1 = fig.add_axes(cbar1_pos)
     cb1 = mpl.colorbar.ColorbarBase(ax=cax1, cmap=mycmap, norm=Normalize(vmin=-0.15, vmax=0.15),
-                                                                 orientation='horizontal', ticks=np.arange(-0.15, 0.16, 0.05)) #cmap=plt.get_cmap('hot')
+                                    orientation='horizontal', ticks=np.arange(-0.15, 0.16, 0.05)) #cmap=plt.get_cmap('hot')
     cb1.set_label('$\Delta$Cloud', fontsize=12)
     cax1.text(-0.1,0.5,'More cloud\n over forest', transform=cax1.transAxes, color='b',ha='center',va='center',fontsize=10)
     cax1.text(1.1,0.5,'Less cloud\n over forest',transform=cax1.transAxes, color='r',ha='center',va='center',fontsize=10)
@@ -222,8 +234,8 @@ def make_plot():
     # Colorbar for panel D
     cbar4_pos = [ax4.get_position().x1+0.025, ax4.get_position().y0, 0.01, ax4.get_position().height]
     cax4 = fig.add_axes(cbar4_pos)
-    cb4 = mpl.colorbar.ColorbarBase(ax=cax4, cmap=mycmap2,norm=Normalize(vmin=0, vmax=24),
-                                                                 orientation='vertical', ticks=np.arange(0, 25, 6)) #cmap=plt.get_cmap('hot') 
+    cb4 = mpl.colorbar.ColorbarBase(ax=cax4, cmap=mycmap2, norm=Normalize(vmin=0, vmax=24),
+                                    orientation='vertical', ticks=np.arange(0, 25, 6)) #cmap=plt.get_cmap('hot') 
     
     cb4.set_label('Local time', fontsize=12)
     
@@ -242,7 +254,7 @@ def make_plot():
     ax4.set_title('Local hour of maximum impact')
     
     # plt.savefig('../figure/figure1.pdf', bbox_inches='tight')
-    plt.savefig('../figure/figure1_0525.png', dpi=300, bbox_inches='tight')
+    plt.savefig('../figure/figure1_0803.png', dpi=300, bbox_inches='tight')
     
     print('Figure saved')
 
