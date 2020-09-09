@@ -15,16 +15,18 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 #    mycmap=np.genfromtxt('../data/jet_blue_red_colormap.csv',delimiter=',')
 #    return ListedColormap(mycmap)
 
-def get_myjet_cmap(levels=False,left_offset=0, right_offset=0):
+def get_myjet_cmap(levels=False,left_offset=0,right_offset=0):
     mycmap=np.genfromtxt('../data/jet_blue_red_colormap.csv', delimiter=',')
-    if levels.any():
+    if levels:
         n1=np.floor(np.linspace(127, 0, num=np.int(levels.shape[0]/2)))
         n2=np.floor(np.linspace(128, 255, num=np.int(levels.shape[0]/2)))
         if right_offset!=0:
             n=np.concatenate([n1[::-1],n2[0:-right_offset]]).astype(int)
-        else:
-            n=np.concatenate([n1[::-1],n2]).astype(int)
-    return ListedColormap(mycmap[n])
+        if left_offset!=0:
+            n=np.concatenate([n1[::-1],n2[left_offset::]]).astype(int)
+        return ListedColormap(mycmap[n])
+    else:
+        return ListedColormap(mycmap)
 
 # Reproduce latitude statistics from matlab, data should be numpy data array
 def lat_pattern(data):
@@ -75,11 +77,14 @@ def set_lat_lon(ax, xtickrange, ytickrange, label=False,pad=0.05, fontsize=8):
 
 def make_plot():
     # Load data
-    ds05=xr.open_dataset('../data/results/xu/result.nc')
+   # ds05=xr.open_dataset('../data/results/xu/result.nc')
+    ds05=xr.open_dataset('../data/results/xu/result_water_removed0908.nc')
 #    ds005=xr.open_dataset('../data/results/xu/result_005.nc')
     #msgmax=xr.open_dataset('../data/results/msg_potential_maximum.nc')
-    msghour=xr.open_dataset('../data/results/msg_potential_maximum_hour.nc')
-    msg14=xr.open_dataset('../data/results/msg_potential_1400.nc')
+   # msghour=xr.open_dataset('../data/results/msg_potential_maximum_hour.nc')
+    msghour=xr.open_dataset('../data/results/msg_potential_maximum_hour0908.nc')
+   # msg14=xr.open_dataset('../data/results/msg_potential_1400.nc')
+    msg14=xr.open_dataset('../data/results/xu/MSG_potential0908.nc')
     
     # Calculate some variables
 #    pot_lat=lat_pattern(ds05.potential.values)
@@ -87,22 +92,23 @@ def make_plot():
     pot_neg_lat=lat_pattern(ds05.potential.where(ds05.potential<0).values)
     pot_pos_lat_msg=lat_pattern(msg14.potential.where(msg14.potential>0).values)
     pot_neg_lat_msg=lat_pattern(msg14.potential.where(msg14.potential<0).values)
-    
-    f1=np.histogram(msghour.local_hour.values.flatten(), bins=range(0,25), density=True)
+    # range of bin includes left and exclude right, and include rightmost edge
+    f1=np.histogram(msghour.local_hour.values.flatten(), bins=range(0,25), density=True) 
     v1=np.round(f1[0][0:6].sum()*100,0)
     v2=np.round(f1[0][6:12].sum()*100,0)
     v3=np.round(f1[0][12:18].sum()*100,0)
     v4=np.round(f1[0][18:24].sum()*100,0)
     # jet cmap
-    mycmap=get_myjet_cmap(levels=np.arange(-0.15,0.151,0.0125))
-    mycmap_msg=get_myjet_cmap(levels=np.arange(-0.15,0.151,0.0125),right_offset=2)
+   # mycmap=get_myjet_cmap(levels=np.arange(-0.15,0.151,0.0125))
+   # mycmap_msg=get_myjet_cmap(levels=np.arange(-0.15,0.151,0.0125),left_offset=2)
+    mycmap=get_myjet_cmap()
+    mycmap_msg=get_myjet_cmap()
     
     fig = plt.figure(figsize=(10,9))
     ####################### Panel A
     pos1 = [0.05, 0.6, 0.70, 0.35] # [left, bottom, width, height]
     ax1 = fig.add_axes(pos1, projection=ccrs.PlateCarree())
-    (-ds05.potential).plot(ax=ax1, vmax=0.15,vmin=-0.15, 
-                           levels=np.arange(-0.15, 0.151,0.0125), transform=ccrs.PlateCarree(), 
+    ds05.potential.plot(ax=ax1, vmax=0.15,vmin=-0.15, transform=ccrs.PlateCarree(), 
                            cmap=mycmap,add_colorbar=False, rasterized=True)
     ax1.set_ylabel('')
     ax1.set_xlabel('')
@@ -119,11 +125,11 @@ def make_plot():
 #    ax2.plot(pot_lat[2,:],pot_lat[0,:],lw=1.25,color='k',label='Potential')
 #    ax2.fill_betweenx(pot_lat[0,:], pot_lat[4,:], pot_lat[5,:], facecolor='#D2D2D2',edgecolor='grey', alpha=0.8, label='Total')
     # positive impact
-    ax2.plot(-pot_neg_lat[2,:],pot_neg_lat[0,:],lw=1,color='red',label='Positive')
-    ax2.fill_betweenx(pot_neg_lat[0,:], -pot_neg_lat[4,:], -pot_neg_lat[5,:], facecolor='#D2AAAA',edgecolor='none', alpha=0.8, label='Positive')
+    ax2.plot(pot_pos_lat[2,:],pot_pos_lat[0,:],lw=1,color='red',label='Positive')
+    ax2.fill_betweenx(pot_pos_lat[0,:], pot_pos_lat[4,:], pot_pos_lat[5,:], facecolor='#D2AAAA',edgecolor='none', alpha=0.8, label='Positive')
     # Negative impact
-    ax2.plot(-pot_pos_lat[2,:],pot_pos_lat[0,:],lw=1,color='blue',label='Negative')
-    ax2.fill_betweenx(pot_pos_lat[0,:], -pot_pos_lat[4,:], -pot_pos_lat[5,:], facecolor='#D2D2D2',edgecolor='none', alpha=0.8, label='Negative')
+    ax2.plot(pot_neg_lat[2,:],pot_neg_lat[0,:],lw=1,color='blue',label='Negative')
+    ax2.fill_betweenx(pot_neg_lat[0,:], pot_neg_lat[4,:], pot_neg_lat[5,:], facecolor='#D2D2D2',edgecolor='none', alpha=0.8, label='Negative')
     # Legend
     h1, l1 = ax2.get_legend_handles_labels()
     ax2.legend(h1[0:2],['Positive','Negative'],loc='upper right',fontsize='small',frameon=False,
@@ -131,7 +137,7 @@ def make_plot():
     
     ax2.plot([0,0],[-60,80],'--',lw=1,color='black') # zero line
     ax2.set_ylim([-60,80])
-    ax2.set_xlim([-0.10,0.10])
+    ax2.set_xlim([-0.075,0.075])
     ax2.set_xlabel('$\Delta$Cloud')
     ax2.set_xticks(np.arange(-0.05, 0.10-0.01, 0.05))
     ax2.set_yticks(np.arange(-60, 80, 30))
@@ -145,7 +151,7 @@ def make_plot():
     pos3 = [0.05, 0.125, 0.3, 0.5] # [left, bottom, width, height] #
     ax3 = fig.add_axes(pos3, projection=ccrs.PlateCarree())
     
-    (-msg14.potential).plot(levels=np.arange(-0.15, 0.151,0.025), vmin=-0.15, vmax=0.15,cmap=mycmap_msg,
+    msg14.potential.plot(vmin=-0.15, vmax=0.15,cmap=mycmap_msg,
                             transform=ccrs.PlateCarree(),add_colorbar=False,rasterized=True)
     
     ax3.set_extent([-70, 60, -20, 45])
@@ -157,11 +163,11 @@ def make_plot():
 
 ### Panel D MSG latitude pattern
     # positive impact
-    ax3b.plot(-pot_neg_lat_msg[2,:],pot_pos_lat_msg[0,:],lw=1,color='red',label='Positive')
-    ax3b.fill_betweenx(pot_pos_lat_msg[0,:], -pot_neg_lat_msg[4,:], -pot_neg_lat_msg[5,:], facecolor='#D2AAAA',edgecolor='none', alpha=0.8, label='Positive')
+    ax3b.plot(pot_pos_lat_msg[2,:],pot_pos_lat_msg[0,:],lw=1,color='red',label='Positive')
+    ax3b.fill_betweenx(pot_pos_lat_msg[0,:], pot_pos_lat_msg[4,:], pot_pos_lat_msg[5,:], facecolor='#D2AAAA',edgecolor='none', alpha=0.8, label='Positive')
     # Negative impact
-    ax3b.plot(-pot_pos_lat_msg[2,:],pot_pos_lat_msg[0,:],lw=1,color='blue',label='Negative')
-    ax3b.fill_betweenx(pot_pos_lat_msg[0,:], -pot_pos_lat_msg[4,:], -pot_pos_lat_msg[5,:], facecolor='#D2D2D2',edgecolor='none', alpha=0.8, label='Negative')
+    ax3b.plot(pot_neg_lat_msg[2,:],pot_neg_lat_msg[0,:],lw=1,color='blue',label='Negative')
+    ax3b.fill_betweenx(pot_neg_lat_msg[0,:], pot_neg_lat_msg[4,:], pot_neg_lat_msg[5,:], facecolor='#D2D2D2',edgecolor='none', alpha=0.8, label='Negative')
     # Legend
     h1, l1 = ax3b.get_legend_handles_labels()
     ax3b.legend(h1[0:3],['Positive','Negative'],loc=[0.5,0.5],fontsize='small',frameon=False,
@@ -169,7 +175,7 @@ def make_plot():
 
     ax3b.plot([0,0],[-30,60],'--',lw=1,color='black') # zero line
     ax3b.set_ylim(ax3.get_ylim())
-    ax3b.set_xlim([-0.10,0.10])
+    ax3b.set_xlim([-0.075,0.075])
     ax3b.set_xlabel('$\Delta$Cloud')
     ax3b.set_xticks(np.arange(-0.05, 0.10-0.01, 0.05))
     ax3b.set_yticks(np.arange(-30, 61, 30))
@@ -194,10 +200,10 @@ def make_plot():
     ax4_bar = ax4.inset_axes([0.3,0.1,0.3,0.25])
     
     ##########Panel D inset bar
-    v1=np.round(f1[0][0:6].sum()*100,0)
-    v2=np.round(f1[0][6:12].sum()*100,0)
-    v3=np.round(f1[0][12:18].sum()*100,0)
-    v4=np.round(f1[0][18:24].sum()*100,0)
+#    v1=np.round(f1[0][0:6].sum()*100,0)
+#    v2=np.round(f1[0][6:12].sum()*100,0)
+#    v3=np.round(f1[0][12:18].sum()*100,0)
+#    v4=np.round(f1[0][18:24].sum()*100,0)
     
     ax4_bar.bar(f1[1][0:-1]+0.5,f1[0]*100,width=0.75, color=['cyan']*6 + ['lime']*6+['orangered']*6+['blue']*6)
     ax4_bar.text(2.5, 5, '%d'%v1+'%',ha='center',color='cyan',fontsize=9)
@@ -205,7 +211,7 @@ def make_plot():
     ax4_bar.text(14.5, 12.7,'%d'%v3+'%',ha='center',color='orangered',fontsize=9)
     ax4_bar.text(20.5, 5, '%d'%v4+'%',ha='center',color='blue',fontsize=9)
     ax4_bar.set_ylim([0,13.5])
-    ax4_bar.set_xlim([-0.5,23.5])
+    ax4_bar.set_xlim([-0.5,24.5])
     ax4_bar.set_xticks(range(0,25,6))
     ax4_bar.set_xticklabels(range(0,25,6), fontsize=8)
     ax4_bar.tick_params(axis='x', which='major', pad=0)
@@ -221,8 +227,8 @@ def make_plot():
     cb1 = mpl.colorbar.ColorbarBase(ax=cax1, cmap=mycmap, norm=Normalize(vmin=-0.15, vmax=0.15),
                                     orientation='horizontal', ticks=np.arange(-0.15, 0.16, 0.05)) #cmap=plt.get_cmap('hot')
     cb1.set_label('$\Delta$Cloud', fontsize=12)
-    cax1.text(-0.1,0.5,'More cloud\n over forest', transform=cax1.transAxes, color='b',ha='center',va='center',fontsize=10)
-    cax1.text(1.1,0.5,'Less cloud\n over forest',transform=cax1.transAxes, color='r',ha='center',va='center',fontsize=10)
+    cax1.text(-0.1,0.5,'Less clouds\n over forest', transform=cax1.transAxes, color='b',ha='center',va='center',fontsize=10)
+    cax1.text(1.1,0.5,'More clouds\n over forest',transform=cax1.transAxes, color='r',ha='center',va='center',fontsize=10)
     
 #    # Colorbar for panel C
 #    cbar3_pos = [ax3.get_position().x1+0.025, ax3.get_position().y0, 0.01, ax3.get_position().height]
@@ -247,14 +253,14 @@ def make_plot():
     ax4.text(-0.09, 1.03, 'e', fontsize=14, transform=ax4.transAxes, fontweight='bold')
     
     # Add subplot title
-    ax1.set_title('Potential cloud impact')
+    ax1.set_title('Potential cloud effect')
     ax1.text(0.125, 0.05, 'MODIS', fontsize=12,transform=ax1.transAxes,ha='center',fontweight='bold')
-    ax3.set_title('Potential cloud impact')
+    ax3.set_title('Potential cloud effect')
     ax3.text(0.25, 0.05, 'MSG', fontsize=12,transform=ax3.transAxes,fontweight='bold')
-    ax4.set_title('Local hour of maximum impact')
+    ax4.set_title('Local hour of maximum effect')
     
     # plt.savefig('../figure/figure1.pdf', bbox_inches='tight')
-    plt.savefig('../figure/figure1_0803.png', dpi=300, bbox_inches='tight')
+    plt.savefig('../figure/figure1_0908.png', dpi=300, bbox_inches='tight')
     
     print('Figure saved')
 
