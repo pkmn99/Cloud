@@ -9,7 +9,8 @@ import matplotlib as mpl
 
 #att5=xr.open_dataset('../data/results/xu/MODIS_attribu_new.nc')
 #msgatt=xr.open_dataset('../data/results/xu/MSG_attribu_new.nc')
-att5=xr.open_dataset('../data/results/xu/Modis_attribution0908.nc')
+#att5=xr.open_dataset('../data/results/xu/Modis_attribution0908.nc')
+att5=xr.open_dataset('../data/results/xu/MODIS_attribution_0207.nc')
 msgatt=xr.open_dataset('../data/results/xu/MSG_attribution0908.nc')
 
 
@@ -53,6 +54,6 @@ ax2.coastlines()
 ax2.set_title('MSG')
 
 #plt.savefig('../figure/figure_attribution.pdf',bbox_inches='tight')
-plt.savefig('../figure/figure_attribution_0908.png',dpi=300,bbox_inches='tight')
+plt.savefig('../figure/figure_attribution_0207.png',dpi=300,bbox_inches='tight')
 
 print('Figure saved')

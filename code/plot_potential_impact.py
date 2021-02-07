@@ -77,8 +77,8 @@ def set_lat_lon(ax, xtickrange, ytickrange, label=False,pad=0.05, fontsize=8):
 
 def make_plot():
     # Load data
-   # ds05=xr.open_dataset('../data/results/xu/result.nc')
-    ds05=xr.open_dataset('../data/results/xu/result_water_removed0908.nc')
+    ds05=xr.open_dataset('../data/results/xu/MODIS_potential_0207.nc')
+   # ds05=xr.open_dataset('../data/results/xu/result_water_removed0908.nc')
 #    ds005=xr.open_dataset('../data/results/xu/result_005.nc')
     #msgmax=xr.open_dataset('../data/results/msg_potential_maximum.nc')
    # msghour=xr.open_dataset('../data/results/msg_potential_maximum_hour.nc')
@@ -260,7 +260,7 @@ def make_plot():
     ax4.set_title('Local hour of maximum effect')
     
     # plt.savefig('../figure/figure1.pdf', bbox_inches='tight')
-    plt.savefig('../figure/figure1_0908.png', dpi=300, bbox_inches='tight')
+    plt.savefig('../figure/figure1_0207.png', dpi=300, bbox_inches='tight')
     
     print('Figure saved')
 

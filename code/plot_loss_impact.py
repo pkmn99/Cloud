@@ -109,9 +109,10 @@ def move_left(ax, offset=0.05):
 
 def make_plot():
     # Load data
-    loss_yearly=xr.open_dataset('../data/results/xu/forest_loss_effect_year.nc')
-    trend=xr.open_dataset('../data/results/xu/forest_loss_impact_based_on_trend.nc')
-    ds05=xr.open_dataset('../data/results/xu/result.nc')
+    loss_yearly=xr.open_dataset('../data/results/xu/forest_loss_effect_year_0207.nc')
+    trend=xr.open_dataset('../data/results/xu/forest_loss_impact_based_on_trend_0207.nc')
+    loss=xr.open_dataset('../data/results/xu/MODIS_loss_effect_0207.nc')
+#    loss_yearly['time']=list(range(2002,2019))# temporaray fix for time
 
    # floss=xr.open_dataset('../data/results/forestloss_2018_05deg.nc') # old data
    # floss=xr.open_dataset('../data/results/net_loss_2018_05deg.nc')
@@ -136,7 +137,7 @@ def make_plot():
     axbig2 = fig.add_subplot(gs[0:2, 2:4],projection=ccrs.PlateCarree())
     
     floss.forest_loss.plot(ax=axbig1,cmap='hot',rasterized=True, add_colorbar=False)
-    ds05.loss.plot(ax=axbig2,cmap=mycmap,vmin=-0.15, vmax=0.15,rasterized=True, add_colorbar=False)
+    loss.loss_effect.plot(ax=axbig2,cmap=mycmap,vmin=-0.15, vmax=0.15,rasterized=True, add_colorbar=False)
     axbig1.set_extent([-180, 180, -60, 80])
     axbig2.set_extent([-180, 180, -60, 80])
     axbig1.coastlines()
@@ -205,7 +206,7 @@ def make_plot():
     
     # Amazon
     plot_pcolor_map(floss.forest_loss.where(floss.forest_loss!=0).loc[-20:0,-70:-40], ax=ax11,vminmax=[-0.8,0], cmap='hot')
-    plot_pcolor_map(ds05.loss.where(floss.forest_loss<-0.05).loc[-20:0,-70:-40], ax=ax12, vminmax=[-0.15,0.15], cmap=mycmap)
+    plot_pcolor_map(loss.loss_effect.where(floss.forest_loss<-0.05).loc[-20:0,-70:-40], ax=ax12, vminmax=[-0.15,0.15], cmap=mycmap)
     plot_pcolor_map(trend.loss_impact.where(floss.forest_loss<-0.05).loc[-20:0,-70:-40], ax=ax13, vminmax=[-0.015,0.015], cmap=mycmap)
     plot_yearly_change(loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,-20:0,-70:-40],ax=ax14)
     plot_trend_line(ax14, loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,-20:0,-70:-40])
@@ -217,7 +218,7 @@ def make_plot():
 
     # Indonisia
     plot_pcolor_map(floss.forest_loss.where(floss.forest_loss!=0).loc[-5:15,95:125], ax=ax21,vminmax=[-0.8,0], cmap='hot')
-    plot_pcolor_map(ds05.loss.where(floss.forest_loss<-0.05).loc[-5:15,95:125], ax=ax22, vminmax=[-0.15,0.15], cmap=mycmap)
+    plot_pcolor_map(loss.loss_effect.where(floss.forest_loss<-0.05).loc[-5:15,95:125], ax=ax22, vminmax=[-0.15,0.15], cmap=mycmap)
     plot_pcolor_map(trend.loss_impact.where(floss.forest_loss<-0.05).loc[-5:15,95:125], ax=ax23, vminmax=[-0.015,0.015], cmap=mycmap)
     plot_yearly_change(loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,-5:15,95:125], ax=ax24)
     plot_trend_line(ax24, loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,-5:15,95:125],x=0.45)
@@ -229,7 +230,7 @@ def make_plot():
 
     #   Southeast America
     plot_pcolor_map(floss.forest_loss.where(floss.forest_loss!=0).loc[25:40,-95:-72.5], ax=ax31,vminmax=[-0.8,0], cmap='hot')
-    plot_pcolor_map(ds05.loss.where(floss.forest_loss<-0.05).loc[25:40,-95:-72.5], ax=ax32, vminmax=[-0.15,0.15], cmap=mycmap)
+    plot_pcolor_map(loss.loss_effect.where(floss.forest_loss<-0.05).loc[25:40,-95:-72.5], ax=ax32, vminmax=[-0.15,0.15], cmap=mycmap)
     plot_pcolor_map(trend.loss_impact.where(floss.forest_loss<-0.05).loc[25:40,-95:-72.5], ax=ax33, vminmax=[-0.015,0.015], cmap=mycmap)
     plot_yearly_change(loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,25:40,-95:-72.5], ax=ax34)
     plot_trend_line(ax34, loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,25:40,-95:-72.5],x=0.38)
@@ -241,7 +242,7 @@ def make_plot():
     
     # East Siberia
     plot_pcolor_map(floss.forest_loss.where(floss.forest_loss!=0).loc[55:70,115:137.5], ax=ax41,vminmax=[-0.8,0], cmap='hot')
-    plot_pcolor_map(ds05.loss.where(floss.forest_loss<-0.05).loc[55:70,115:137.5], ax=ax42, vminmax=[-0.15,0.15], cmap=mycmap)
+    plot_pcolor_map(loss.loss_effect.where(floss.forest_loss<-0.05).loc[55:70,115:137.5], ax=ax42, vminmax=[-0.15,0.15], cmap=mycmap)
     plot_pcolor_map(trend.loss_impact.where(floss.forest_loss<-0.05).loc[55:70,115:137.5], ax=ax43, vminmax=[-0.015,0.015], cmap=mycmap)
     plot_yearly_change(loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,55:70,115:137.5], ax=ax44)
     plot_trend_line(ax44, loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,55:70,115:137.5],x=0.3)
@@ -284,10 +285,10 @@ def make_plot():
     ax41.text(-0.21,0.5,'East Siberia',transform=ax41.transAxes,rotation=90,va='center',fontsize=11)
 
     # Add mean value on the panel
-    floss_mean1 = ds05.loss.where(floss.forest_loss<-0.05).loc[-20:0,-70:-40].mean().values
-    floss_mean2 = ds05.loss.where(floss.forest_loss<-0.05).loc[-5:15,95:125].mean().values
-    floss_mean3 = ds05.loss.where(floss.forest_loss<-0.05).loc[25:40,-95:-72.5].mean().values
-    floss_mean4 = ds05.loss.where(floss.forest_loss<-0.05).loc[55:70,115:137.5].mean().values
+    floss_mean1 = loss.loss_effect.where(floss.forest_loss<-0.05).loc[-20:0,-70:-40].mean().values
+    floss_mean2 = loss.loss_effect.where(floss.forest_loss<-0.05).loc[-5:15,95:125].mean().values
+    floss_mean3 = loss.loss_effect.where(floss.forest_loss<-0.05).loc[25:40,-95:-72.5].mean().values
+    floss_mean4 = loss.loss_effect.where(floss.forest_loss<-0.05).loc[55:70,115:137.5].mean().values
    # floss_mean1 = 100*trend.loss_impact.where(floss.forest_loss<-0.05).loc[-20:0,-70:-40].mean().values
    # floss_mean2 = 100*trend.loss_impact.where(floss.forest_loss<-0.05).loc[-5:15,95:125].mean().values
    # floss_mean3 = 100*trend.loss_impact.where(floss.forest_loss<-0.05).loc[25:40,-95:-72.5].mean().values
@@ -339,7 +340,7 @@ def make_plot():
         else:
             plot_subplot_label(a, panel_txt[i])
        
-    plt.savefig('../figure/figure_floss0822.png',dpi=300,bbox_inches='tight')
+    plt.savefig('../figure/figure_floss0207.png',dpi=300,bbox_inches='tight')
 #    plt.savefig('../figure/figure_floss.pdf',bbox_inches='tight')
     print('Figure saved')
 
