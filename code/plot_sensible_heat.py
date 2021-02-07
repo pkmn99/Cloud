@@ -11,10 +11,28 @@ from matplotlib.colors import Normalize
 from matplotlib.patches import Ellipse
 from plot_potential_impact import get_myjet_cmap 
 
+# Geometric mean regression; Ref: Least Squares Regression vs. Geometric Mean Regression for Ecotoxicology Studies (1995)
+# b,a=geometric_mean_regression(x,y) b:slope, a:const
+def geometric_mean_regression(XY):
+    x = XY[:,0]
+    y = XY[:,1]
+    X = sm.add_constant(x)
+    model_x = sm.OLS(y, X, missing='drop').fit()
+    X2 = sm.add_constant(y)
+    model_y = sm.OLS(x, X2, missing='drop').fit()
+    b = (model_x.params[1]/model_y.params[1])**0.5
+    a = np.nanmean(y)  -  np.nanmean(x) * b
+    return b,a
+
+def f(p, x):
+    """Basic linear regression 'model' for use with ODR"""
+    return (p[0] * x) + p[1]
+
 def load_flux_data(rerun=False):
     if rerun:
        # cloud=xr.open_dataset('../data/results/potential_1deg_noelemask.nc')# 1deg cloud effect
-        cloud=xr.open_dataset('../data/results/xu/potential_one_deg.nc')# 1deg cloud effect
+        cloud=xr.open_dataset('../data/results/xu/potential_one_deg_0207.nc')# 1deg cloud effect
+       # cloud=xr.open_dataset('../data/results/xu/MODIS_potential_1deg_noelemask.nc')# 1deg cloud effect
          
         flux_h=pd.read_csv('../data/H_diff.csv') # Add two pair amazon flux sites
         # Add mean lat/lon for paired sites
@@ -29,7 +47,7 @@ def load_flux_data(rerun=False):
         flux_h.loc[28:29,'region']='AM'
         # append delta cloud value 
         temp = [cloud.potential.sel(lat=flux_h['lat_mean'][i], lon=flux_h['lon_mean'][i], method='nearest').values for i in range(flux_h.shape[0])]
-        flux_h.loc[:,'cloud_diff'] =-np.array(temp)
+        flux_h.loc[:,'cloud_diff'] =np.array(temp)
 
         # Group sites in close distance for plotting
         c = [1] + [2] + [3]*2 + [5]*4 + [9]*2 + [11] +[12]*3 + [15] + [16]*2 + [18,19,20] + [16,22] +[3]*2 + [25]*2 + [27,28,29,30]
@@ -47,10 +65,11 @@ def load_flux_data(rerun=False):
             else: 
                 flux_h.loc[ind,['lon_plotting','lat_plotting']]=flux_h.loc[ind,['lon_mean','lat_mean']].values + v_offset[0:ind.sum() ,:]  
 
-        flux_h.to_csv('../data/results/my_flux_h.csv')
+        flux_h.loc[:,'dif'] = -flux_h.loc[:,'dif']
+        flux_h.to_csv('../data/results/my_flux_h0207.csv')
         print('flux data csv saved')
     else:
-        flux_h = pd.read_csv('../data/results/my_flux_h.csv')
+        flux_h = pd.read_csv('../data/results/my_flux_h0207.csv')
         print('read csv data from saved file')
     return flux_h
 
@@ -73,12 +92,12 @@ def add_circle(ax):
     ax.add_artist(e2)
     ax.add_artist(e3)
 
-def make_plot():
-    cloud05=xr.open_dataset('../data/results/xu/result.nc')
-    msg14=xr.open_dataset('../data/results/msg_potential_1400.nc')
+def make_plot(rerun=False):
+    cloud05=xr.open_dataset('../data/results/xu/MODIS_potential_0207.nc')
+    msg14=xr.open_dataset('../data/results/xu/MSG_potential0908.nc')
     h_sa=xr.open_dataset('../data/results/xu/HG_det.nc')
     h_clm=xr.open_dataset('../data/results/xu/CLM_SH.nc')
-    flux_h=load_flux_data(rerun=True)
+    flux_h=load_flux_data(rerun=rerun)
     mycmap=get_myjet_cmap()
 
     fig = plt.figure(figsize=[10,6])
@@ -86,7 +105,7 @@ def make_plot():
     # Cloud effect panel
     pos1 = [0.05, 0.725, 0.5, 0.5] # [left, bottom, width, height]
     ax1 = fig.add_axes(pos1, projection=ccrs.PlateCarree())
-    (-cloud05).potential.plot(cmap=mycmap, vmin=-0.15,vmax=0.15, ax=ax1, add_colorbar=False, rasterized=True) 
+    cloud05.potential.plot(cmap=mycmap, vmin=-0.15,vmax=0.15, ax=ax1, add_colorbar=False, rasterized=True) 
     ax1.set_extent([-180, 180, -60, 80])
     ax1.coastlines()
     ax1.set_title('Potential cloud change')
@@ -97,7 +116,7 @@ def make_plot():
     # MSG inset Panel
     pos1in = [0.035, 0.825, 0.15, 0.15] # [left, bottom, width, height]
     ax1in = fig.add_axes(pos1in, projection=ccrs.PlateCarree())
-    (-msg14.potential).plot(cmap=mycmap, ax=ax1in, add_colorbar=False, rasterized=True)
+    msg14.potential.plot(cmap=mycmap, ax=ax1in, add_colorbar=False, rasterized=True)
     ax1in.set_extent([-70, 60, -20, 45])
     ax1in.coastlines()
     ax1in.text(0.25, 0.05, 'MSG', fontsize=12,transform=ax1in.transAxes,fontweight='bold')
@@ -115,21 +134,21 @@ def make_plot():
     ## Satellite panel
     pos2 = [0.05, 0.325, 0.5, 0.5] # [left, bottom, width, height]
     ax2 = fig.add_axes(pos2, projection=ccrs.PlateCarree())
-    h_sa.HG_det.plot(cmap=mycmap,vmin=-50,vmax=50, ax=ax2, add_colorbar=False, rasterized=True) # tab10, set3
+    (-h_sa.HG_det).plot(cmap=mycmap,vmin=-50,vmax=50, ax=ax2, add_colorbar=False, rasterized=True) # tab10, set3
 
     # ax2.set_position([ax2.get_position().x0-0.05, ax2.get_position().y0, ax1.get_position().width , ax1.get_position().height])
 
     ax2.set_extent([-180, 180, -60, 80])
     ax2.coastlines()
     ax2.set_title('Potential sensible heat change')
-    ax2.text(0.025, 0.05, '$\Delta$(H+G)', fontsize=12,transform=ax2.transAxes)
+    ax2.text(0.025, 0.05, '$\Delta$H', fontsize=12,transform=ax2.transAxes)
     ax2.text(0.5, 0.05, 'Satellite', fontsize=12,transform=ax2.transAxes ,ha='center',fontweight='bold')
     add_circle(ax2)
 
     ## CLM panel
     pos3 = [0.05, 0.0, 0.5, 0.5] # [left, bottom, width, height]
     ax3 = fig.add_axes(pos3, projection=ccrs.PlateCarree())
-    h_clm.SH.plot(cmap=mycmap,vmin=-50,vmax=50, ax=ax3, add_colorbar=False, rasterized=True) 
+    (-h_clm.SH).plot(cmap=mycmap,vmin=-50,vmax=50, ax=ax3, add_colorbar=False, rasterized=True) 
     ax3.set_extent([-180, 180, -60, 80])
     ax3.coastlines()
     ax3.text(0.025, 0.05, '$\Delta$H', fontsize=12,transform=ax3.transAxes)
@@ -139,9 +158,9 @@ def make_plot():
 
     # Add colorbar for CLM
     cbar3_pos = [ax3.get_position().x0-0.02,
-                                   ax3.get_position().y0+(ax3.get_position().height+ax2.get_position().height)*0.1,
-                                                          0.01, 
-                                                                                 (ax3.get_position().height+ax2.get_position().height)*0.8]
+                 ax3.get_position().y0+(ax3.get_position().height+ax2.get_position().height)*0.1,
+                 0.01, 
+                 (ax3.get_position().height+ax2.get_position().height)*0.8]
     cax3 = fig.add_axes(cbar3_pos)
     cb3 = mpl.colorbar.ColorbarBase(ax=cax3, cmap=mycmap, norm=Normalize(vmin=-50, vmax=50) ,
                                                     orientation='vertical',ticks=np.arange(-50,51,10))
@@ -189,7 +208,7 @@ def make_plot():
     for i in flux_h[ind1&ind].group.unique():
         ind0 = (flux_h.loc[:,'group']==i)
         ax5.plot([flux_h.loc[ind0,'lon_mean'],flux_h.loc[ind0,'lon_plotting']],[flux_h.loc[ind0,'lat_mean'],flux_h.loc[ind0,'lat_plotting']]
-                                              ,color='k',lw=0.5)
+                  ,color='k',lw=0.5)
 
     # Plot H at plotting lat/lon    
     ax5.scatter(flux_h.loc[ind,'lon_plotting'], flux_h.loc[ind,'lat_plotting'], c=flux_h.loc[ind,'dif'], s=20,marker='o',cmap=mycmap,vmax=100, vmin=-100)
@@ -205,20 +224,22 @@ def make_plot():
 
     # Colorbar for flux tower map
     cbar5_pos = [ax4.get_position().x0 +(ax4.get_position().width+ax5.get_position().width)*0.1 ,
-                                    ax5.get_position().y0-0.025, 0.8*(ax4.get_position().width+ax5.get_position().width), 0.015]
+                 ax5.get_position().y0-0.025, 0.8*(ax4.get_position().width+ax5.get_position().width), 0.015]
     cax5 = fig.add_axes(cbar5_pos)
     cb5 = mpl.colorbar.ColorbarBase(ax=cax5, cmap=mycmap, norm=Normalize(vmin=-100, vmax=100) ,
-                                                    orientation='horizontal', ticks=np.arange(-100,101,25))
+                                    orientation='horizontal', ticks=np.arange(-100,101,25))
     cb5.ax.set_xticklabels(np.arange(-100, 101,25), fontsize=9)
     ax5.text(0.9, -0.125, '$W/m^2$', fontsize=10,transform=ax5.transAxes, ha='center')
 
     ##  Flux H and cloud effect panel
     # Estimate regression line
-    ind=flux_h['dif']>-300
-    X = sm.add_constant(flux_h.loc[ind, 'dif'])
-    # model = sm.OLS(flux_h.loc[ind,'cloud_diff'], X, missing='drop')
-    model_rlm = sm.RLM(flux_h['cloud_diff'], X, missing='drop')
-    results = model_rlm.fit()
+    ind=flux_h['dif']>-200
+
+    p = geometric_mean_regression(flux_h.loc[ind,['dif','cloud_diff']].dropna().values)
+   # X = sm.add_constant(flux_h.loc[ind, 'dif'])
+   # # model = sm.OLS(flux_h.loc[ind,'cloud_diff'], X, missing='drop')
+   # model_rlm = sm.RLM(flux_h['cloud_diff'], X, missing='drop')
+   # results = model_rlm.fit()
 
     pos6 = [0.65, 0.15, 0.35, 0.5] # [left, bottom, width, height]
     ax6 = fig.add_axes(pos6)
@@ -228,10 +249,10 @@ def make_plot():
         sns.scatterplot(x="dif", y="cloud_diff", data=flux_h,hue='region',ax=ax6)
     ax6.legend(ax6.get_legend_handles_labels()[0][1::], ['Europe','North America','Australia','Amazon'],frameon=False)
 
-    ax6.plot(np.arange(-120,100,1), results.predict(sm.add_constant(np.arange(-120,100,1))),color='r')
-    ax6.plot([-130,100],[0,0],'--',lw=0.5,color='grey')
+    ax6.plot(np.arange(-100,130,1), f(p, np.arange(-100,130,1)),color='r')
+    ax6.plot([-100,130],[0,0],'--',lw=0.5,color='grey')
     ax6.plot([0,0],[-0.06,0.06],'--',lw=0.5,color='grey')
-    ax6.set_xlim([-130,100])
+    ax6.set_xlim([-100,130])
     ax6.set_ylim([-0.06,0.06])
     ax6.set_ylabel('$\Delta$Cloud', labelpad=0)
     ax6.set_xlabel('$\Delta$H ($W/m^2$)')
@@ -243,9 +264,9 @@ def make_plot():
     ax6.text(-0.02, 1.05, 'd', fontsize=14, transform=ax6.transAxes, fontweight='bold')
 
 
-    plt.savefig('../figure/figure_sensible_heat0616.png',dpi=300,bbox_inches='tight')
+    plt.savefig('../figure/figure_sensible_heat0207.png',dpi=300,bbox_inches='tight')
     print('figure saved')
 
 if __name__=='__main__':
-    make_plot()
+    make_plot(rerun=False)
 #    flux_h=load_flux_data(rerun=True)
