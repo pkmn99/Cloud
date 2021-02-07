@@ -57,7 +57,7 @@ def plot_yearly_change(ds,ax):
     (100*ds.mean(dim=['lat','lon'])).plot(ax=ax,color='b')
     ax.set_xlabel('')
     ax.set_xticklabels('')
-    ax.set_ylabel(r'$\Delta$Cloud$\times$100',color='b',labelpad=0)
+    ax.set_ylabel(r'$\Delta \mathrm{Cloud_{loss}} \times100$',color='b',labelpad=0)
  #   ax.tick_params(axis='y', which='both', direction='in', right=True, labelright=True, left=False,labelleft=False)
     ax.tick_params(axis='y', direction='in', colors='b')
 
@@ -158,7 +158,7 @@ def make_plot():
     plot_region_box(axbig2, [25,40,-95,-72.5]) # SouthEast USA
     
     axbig1.set_title('Forest loss', fontsize=14)
-    axbig2.set_title('Forest loss impact on cloud',fontsize=14)
+    axbig2.set_title('Forest loss impact on cloud cover',fontsize=14)
     
     # Add colorbar to big plot
     cbarbig1_pos = [axbig1.get_position().x0, axbig1.get_position().y0-0.025, axbig1.get_position().width, 0.01]
@@ -174,7 +174,7 @@ def make_plot():
     cbbig2 = mpl.colorbar.ColorbarBase(ax=caxbig2, cmap=mycmap, norm=Normalize(vmin=-0.25, vmax=0.25),
                                        orientation='horizontal', ticks=np.arange(-0.2, 0.21, 0.1)) 
     cbbig2.ax.set_yticklabels(np.arange(-0.2, 0.21, 0.1),fontsize=10)
-    cbbig2.set_label('$\Delta$Cloud', fontsize=12)
+    cbbig2.set_label(r'$\Delta\mathrm{Cloud_{loss}}$', fontsize=12)
     
     # Regional zoomed map
     ax11 = fig.add_subplot(6, 4, 1+8, projection=ccrs.PlateCarree())
@@ -278,10 +278,10 @@ def make_plot():
    # ax44.text(0.05,0.05,'East Siberia' ,transform=ax44.transAxes)
 
     # Add region names on the left side of figure 
-    ax11.text(-0.21,0.5,'Amazon',transform=ax11.transAxes,rotation=90,va='center')
-    ax21.text(-0.21,0.5,'Indonesia',transform=ax21.transAxes,rotation=90,va='center')
-    ax31.text(-0.21,0.5,'Southeast US',transform=ax31.transAxes,rotation=90,va='center')
-    ax41.text(-0.21,0.5,'East Siberia',transform=ax41.transAxes,rotation=90,va='center')
+    ax11.text(-0.21,0.5,'Amazon',transform=ax11.transAxes,rotation=90,va='center',fontsize=11)
+    ax21.text(-0.21,0.5,'Indonesia',transform=ax21.transAxes,rotation=90,va='center',fontsize=11)
+    ax31.text(-0.21,0.5,'Southeast US',transform=ax31.transAxes,rotation=90,va='center',fontsize=11)
+    ax41.text(-0.21,0.5,'East Siberia',transform=ax41.transAxes,rotation=90,va='center',fontsize=11)
 
     # Add mean value on the panel
     floss_mean1 = ds05.loss.where(floss.forest_loss<-0.05).loc[-20:0,-70:-40].mean().values
@@ -321,14 +321,14 @@ def make_plot():
     cax42 = fig.add_axes(cbar42_pos)
     cb42 = mpl.colorbar.ColorbarBase(ax=cax42, cmap=mycmap, norm=Normalize(vmin=-0.25, vmax=0.25),
                                      orientation='horizontal', ticks=np.arange(-0.2, 0.21, 0.1)) #cmap=plt.get_cmap('hot')
-    cb42.set_label('$\Delta$Cloud', fontsize=12)
+    cb42.set_label('$\Delta\mathrm{Cloud_{loss}}$', fontsize=12)
     
     cbar43_pos = [ax43.get_position().x0, ax43.get_position().y0-0.035, ax43.get_position().width, 0.01]
     cax43 = fig.add_axes(cbar43_pos)
     cb43 = mpl.colorbar.ColorbarBase(ax=cax43, cmap=mycmap, norm=Normalize(vmin=-0.015, vmax=0.015),
                                      orientation='horizontal', ticks=np.arange(-0.015, 0.016, 0.005)) #cmap=plt.get_cmap('hot')
     cb43.set_ticklabels(np.arange(-1.5, 1.6, 0.5))
-    cb43.set_label(r'$\Delta$CloudTrend ($\times$100/Year)', fontsize=12)
+    cb43.set_label('$\Delta \mathrm{Cloud_{loss}Trend}$ \n'+  r'($\times$100/Year)', fontsize=12, ha='center')
     
     #     Panel labels
     panel_txt = [chr(i) for i in range(ord('a'), ord('r')+1)]
@@ -339,7 +339,7 @@ def make_plot():
         else:
             plot_subplot_label(a, panel_txt[i])
        
-    plt.savefig('../figure/figure_floss0623.png',dpi=300,bbox_inches='tight')
+    plt.savefig('../figure/figure_floss0822.png',dpi=300,bbox_inches='tight')
 #    plt.savefig('../figure/figure_floss.pdf',bbox_inches='tight')
     print('Figure saved')
 
