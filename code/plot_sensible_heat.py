@@ -4,6 +4,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+import scipy.stats
 import statsmodels.api as sm
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -12,7 +13,7 @@ from matplotlib.patches import Ellipse
 from plot_potential_impact import get_myjet_cmap 
 
 # Geometric mean regression; Ref: Least Squares Regression vs. Geometric Mean Regression for Ecotoxicology Studies (1995)
-# b,a=geometric_mean_regression(x,y) b:slope, a:const
+# b,a,r=geometric_mean_regression(x,y) b:slope, a:const, r: correlation and p value
 def geometric_mean_regression(XY):
     x = XY[:,0]
     y = XY[:,1]
@@ -21,14 +22,16 @@ def geometric_mean_regression(XY):
     X2 = sm.add_constant(y)
     model_y = sm.OLS(x, X2, missing='drop').fit()
     b = (model_x.params[1]/model_y.params[1])**0.5
-    a = np.nanmean(y)  -  np.nanmean(x) * b
-    return b,a
+    a = np.nanmean(y) - np.nanmean(x) * b
+    r=scipy.stats.spearmanr(x, y)#pearsonr
+    print('correlation is %f and p is %f'%(r[0],r[1]))
+    return b,a,r
 
 def f(p, x):
     """Basic linear regression 'model' for use with ODR"""
     return (p[0] * x) + p[1]
 
-def load_flux_data(rerun=False):
+def load_flux_data(rerun=False,remove_outlier=True):
     if rerun:
        # cloud=xr.open_dataset('../data/results/potential_1deg_noelemask.nc')# 1deg cloud effect
         cloud=xr.open_dataset('../data/results/xu/potential_one_deg_0207.nc')# 1deg cloud effect
@@ -71,6 +74,9 @@ def load_flux_data(rerun=False):
     else:
         flux_h = pd.read_csv('../data/results/my_flux_h0207.csv')
         print('read csv data from saved file')
+    if remove_outlier:
+       # flux_h = flux_h[(flux_h.dif<150)&(flux_h.dif>-90)]
+        flux_h = flux_h[(flux_h.dif<150)&(flux_h.dif>-100)]
     return flux_h
 
 # Add ellipse for key cloud supression region
@@ -249,7 +255,7 @@ def make_plot(rerun=False):
         sns.scatterplot(x="dif", y="cloud_diff", data=flux_h,hue='region',ax=ax6)
     ax6.legend(ax6.get_legend_handles_labels()[0][1::], ['Europe','North America','Australia','Amazon'],frameon=False)
 
-    ax6.plot(np.arange(-100,130,1), f(p, np.arange(-100,130,1)),color='r')
+    ax6.plot(np.arange(-100,130,1), f(p[0:2], np.arange(-100,130,1)),color='r')
     ax6.plot([-100,130],[0,0],'--',lw=0.5,color='grey')
     ax6.plot([0,0],[-0.06,0.06],'--',lw=0.5,color='grey')
     ax6.set_xlim([-100,130])
@@ -257,14 +263,15 @@ def make_plot(rerun=False):
     ax6.set_ylabel('$\Delta$Cloud', labelpad=0)
     ax6.set_xlabel('$\Delta$H ($W/m^2$)')
     ax6.set_title('Paired Flux site')
+#    ax6.text(0.1, 0.2, '1000*y=%.2fx+%.2f'%(p[0]*1000,p[1]*1000), fontsize=8, transform=ax6.transAxes)
+    ax6.text(0.1, 0.1, r'$\rho$=%.2f, $\it{p}$=%.2f'%(p[2][0],p[2][1]), fontsize=10, transform=ax6.transAxes)
 
     ax1.text(-0.02, 1.05, 'a', fontsize=14, transform=ax1.transAxes, fontweight='bold')
     ax2.text(-0.02, 1.05, 'b', fontsize=14, transform=ax2.transAxes, fontweight='bold')
     ax4.text(-0.02, 1.05, 'c', fontsize=14, transform=ax4.transAxes, fontweight='bold')
     ax6.text(-0.02, 1.05, 'd', fontsize=14, transform=ax6.transAxes, fontweight='bold')
 
-
-    plt.savefig('../figure/figure_sensible_heat0207.png',dpi=300,bbox_inches='tight')
+    plt.savefig('../figure/figure_sensible_heat0218.png',dpi=300,bbox_inches='tight')
     print('figure saved')
 
 if __name__=='__main__':
