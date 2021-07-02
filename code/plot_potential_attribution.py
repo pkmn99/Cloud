@@ -10,7 +10,7 @@ from matplotlib.colors import ListedColormap, Normalize
 import cartopy.feature as cfeature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-# A figure merging potential effect with attribution part
+# Revised figure 1 by merging attribution part with the potential effect 
 
 #def get_myjet_cmap():
 #    mycmap=np.genfromtxt('../data/jet_blue_red_colormap.csv',delimiter=',')
@@ -100,6 +100,13 @@ def make_plot():
     v2=np.round(f1[0][6:12].sum()*100,0)
     v3=np.round(f1[0][12:18].sum()*100,0)
     v4=np.round(f1[0][18:24].sum()*100,0)
+    # percent of positive and negative cloud effects
+    pos_modis = (ds05.potential>0).sum()/(ds05.potential.notnull()).sum()*100
+    neg_modis = (ds05.potential<0).sum()/(ds05.potential.notnull()).sum()*100
+    pos_msg = (msg14.potential>0).sum()/(msg14.potential.notnull()).sum()*100
+    neg_msg = (msg14.potential<0).sum()/(msg14.potential.notnull()).sum()*100
+    print('percent for modis %d, for msg %d'%(pos_modis, pos_msg))
+
     # jet cmap
    # mycmap=get_myjet_cmap(levels=np.arange(-0.15,0.151,0.0125))
    # mycmap_msg=get_myjet_cmap(levels=np.arange(-0.15,0.151,0.0125),left_offset=2)
@@ -132,6 +139,11 @@ def make_plot():
     # Negative impact
     ax2.plot(pot_neg_lat[2,:],pot_neg_lat[0,:],lw=1,color='blue',label='Negative')
     ax2.fill_betweenx(pot_neg_lat[0,:], pot_neg_lat[4,:], pot_neg_lat[5,:], facecolor='#D2D2D2',edgecolor='none', alpha=0.8, label='Negative')
+
+    # Add positive/negative cloud effect percentage
+    ax2.text(-0.05, -47, '%d%%'%neg_modis,ha='center',color='blue',fontsize=9)
+    ax2.text(0.05, -47, '%d%%'%pos_modis,ha='center',color='red',fontsize=9)
+
     # Legend
     h1, l1 = ax2.get_legend_handles_labels()
     ax2.legend(h1[0:2],['Positive','Negative'],loc='upper right',fontsize='small',frameon=False,
@@ -170,6 +182,11 @@ def make_plot():
     # Negative impact
     ax3b.plot(pot_neg_lat_msg[2,:],pot_neg_lat_msg[0,:],lw=1,color='blue',label='Negative')
     ax3b.fill_betweenx(pot_neg_lat_msg[0,:], pot_neg_lat_msg[4,:], pot_neg_lat_msg[5,:], facecolor='#D2D2D2',edgecolor='none', alpha=0.8, label='Negative')
+
+    # Add positive/negative cloud effect percentage
+    ax3b.text(-0.05, -30, '%d%%'%neg_msg,ha='center',color='blue',fontsize=9)
+    ax3b.text(0.05, -30, '%d%%'%pos_msg,ha='center',color='red',fontsize=9)
+
     # Legend
     h1, l1 = ax3b.get_legend_handles_labels()
     ax3b.legend(h1[0:3],['Positive','Negative'],loc=[0.5,0.5],fontsize='small',frameon=False,
@@ -236,6 +253,7 @@ def make_plot():
     att5.attribution.where(att5.attribution!=0).plot(cmap=discmap5, ax=ax5, add_colorbar=False, rasterized=True)
     ax5.set_extent([-180, 180, -60, 80])
     ax5.coastlines()
+    ax5.text(0.45, 0.05, 'MODIS', fontsize=12,transform=ax5.transAxes,ha='center',fontweight='bold')
 
     ################ Panel F
     pos6 = [0.05, 0.02, 0.17, 0.17] # [left, bottom, width, height]
@@ -243,7 +261,8 @@ def make_plot():
     msgatt.attribution.where(msgatt.attribution!=0).plot(cmap=discmap5, ax=ax6, add_colorbar=False, rasterized=True) # tab10, set3
     ax6.set_extent([-70, 60, -20, 45])
     ax6.coastlines()
-    ax6.set_title('MSG')
+    ax6.text(0.25, 0.05, 'MSG', fontsize=12,transform=ax6.transAxes,fontweight='bold')
+   # ax6.set_title('MSG')
 
     
     # Add colorbar
@@ -289,15 +308,15 @@ def make_plot():
     ax5.text(-0.04, 1.01, 'f', fontsize=14, transform=ax5.transAxes, fontweight='bold')
     
     # Add subplot title
-    ax1.set_title('Potential cloud effect based on MODIS')
+    ax1.set_title('Potential cloud effect ($\Delta$Cloud)')
     ax1.text(0.125, 0.05, 'MODIS', fontsize=12,transform=ax1.transAxes,ha='center',fontweight='bold')
-    ax3.set_title('Potential cloud effect based on MSG')
+    ax3.set_title('Potential cloud effect ($\Delta$Cloud)')
     ax3.text(0.25, 0.05, 'MSG', fontsize=12,transform=ax3.transAxes,fontweight='bold')
     ax4.set_title('Local hour of maximum effect')
-    ax5.set_title('Attribution of potential cloud effect of forest (MODIS)')
+    ax5.set_title('Attribution of potential cloud effect of forest')
     
     # plt.savefig('../figure/figure1.pdf', bbox_inches='tight')
-    plt.savefig('../figure/figure1_0612.png', dpi=300, bbox_inches='tight')
+    plt.savefig('../figure/figure1_0627.png', dpi=300, bbox_inches='tight')
     print('Figure saved')
 
 if __name__ == '__main__':
