@@ -104,7 +104,9 @@ def make_plot(rerun=False):
     h_sa=xr.open_dataset('../data/results/xu/HG_det.nc')
     h_clm=xr.open_dataset('../data/results/xu/CLM_SH.nc')
     flux_h=load_flux_data(rerun=rerun)
-    mycmap=get_myjet_cmap()
+  #  mycmap=get_myjet_cmap()
+    mycmap=get_myjet_cmap(levels=np.arange(-0.15,0.151,0.025)) # use levels for color
+    mycmap_flux=get_myjet_cmap(levels=np.arange(-100,101,25)) # use levels for color
 
     fig = plt.figure(figsize=[10,6])
 
@@ -114,8 +116,8 @@ def make_plot(rerun=False):
     cloud05.potential.plot(cmap=mycmap, vmin=-0.15,vmax=0.15, ax=ax1, add_colorbar=False, rasterized=True) 
     ax1.set_extent([-180, 180, -60, 80])
     ax1.coastlines()
-    ax1.set_title('Potential cloud change')
-    ax1.text(0.015, 0.6, '$\Delta$Cloud', fontsize=12,transform=ax1.transAxes)
+    ax1.set_title('Potential cloud effect ($\Delta$Cloud)')
+#    ax1.text(0.015, 0.6, '$\Delta$Cloud', fontsize=12,transform=ax1.transAxes)
     ax1.text(0.5, 0.05, 'MODIS', fontsize=12,transform=ax1.transAxes,ha='center',fontweight='bold')
     add_circle(ax1)
 
@@ -146,8 +148,8 @@ def make_plot(rerun=False):
 
     ax2.set_extent([-180, 180, -60, 80])
     ax2.coastlines()
-    ax2.set_title('Potential sensible heat change')
-    ax2.text(0.025, 0.05, '$\Delta$H', fontsize=12,transform=ax2.transAxes)
+    ax2.set_title('Sensible heat difference ($\Delta$H)')
+#    ax2.text(0.025, 0.05, '$\Delta$H', fontsize=12,transform=ax2.transAxes)
     ax2.text(0.5, 0.05, 'Satellite', fontsize=12,transform=ax2.transAxes ,ha='center',fontweight='bold')
     add_circle(ax2)
 
@@ -157,7 +159,7 @@ def make_plot(rerun=False):
     (-h_clm.SH).plot(cmap=mycmap,vmin=-50,vmax=50, ax=ax3, add_colorbar=False, rasterized=True) 
     ax3.set_extent([-180, 180, -60, 80])
     ax3.coastlines()
-    ax3.text(0.025, 0.05, '$\Delta$H', fontsize=12,transform=ax3.transAxes)
+#    ax3.text(0.025, 0.05, '$\Delta$H', fontsize=12,transform=ax3.transAxes)
     ax3.text(0.5, 0.05, 'CLM', fontsize=12,transform=ax3.transAxes, ha='center', fontweight='bold')
     ax3.text(-0.05, 0.05, '$W/m^2$', fontsize=10,transform=ax3.transAxes, ha='center')
     add_circle(ax3)
@@ -201,8 +203,8 @@ def make_plot(rerun=False):
     ax4.text(0.05, 0.9, 'North America', fontsize=10,transform=ax4.transAxes)
     
     ax4.text(0.5, 0.05, 'Paired flux site', fontsize=12, transform=ax4.transAxes, ha='center', fontweight='bold')
-    ax4.text(0.01, 0.035, '$\Delta$H', fontsize=12,transform=ax4.transAxes)
-    ax4.text(0.75, 1.075, 'Potential sensible heat change', fontsize=12, transform=ax4.transAxes, ha='center')
+#    ax4.text(0.01, 0.035, '$\Delta$H', fontsize=12,transform=ax4.transAxes)
+    ax4.text(0.75, 1.075, 'Sensible heat difference ($\Delta$H)', fontsize=12, transform=ax4.transAxes, ha='center')
     
     ##  Flux location 2  panel: EU
     pos5 = [0.8, 0.8, 0.25, 0.25] # [left, bottom, width, height]
@@ -217,7 +219,7 @@ def make_plot(rerun=False):
                   ,color='k',lw=0.5)
 
     # Plot H at plotting lat/lon    
-    ax5.scatter(flux_h.loc[ind,'lon_plotting'], flux_h.loc[ind,'lat_plotting'], c=flux_h.loc[ind,'dif'], s=20,marker='o',cmap=mycmap,vmax=100, vmin=-100)
+    ax5.scatter(flux_h.loc[ind,'lon_plotting'], flux_h.loc[ind,'lat_plotting'], c=flux_h.loc[ind,'dif'], s=20,marker='o',cmap=mycmap_flux,vmax=100, vmin=-100)
     # plot cluster center location  
     ax5.scatter(flux_h.loc[ind1,'lon_mean'], flux_h.loc[ind1,'lat_mean'], s=10, marker='.',color='k')
     ax5.set_extent([0, 20, 40, 60])
@@ -232,7 +234,7 @@ def make_plot(rerun=False):
     cbar5_pos = [ax4.get_position().x0 +(ax4.get_position().width+ax5.get_position().width)*0.1 ,
                  ax5.get_position().y0-0.025, 0.8*(ax4.get_position().width+ax5.get_position().width), 0.015]
     cax5 = fig.add_axes(cbar5_pos)
-    cb5 = mpl.colorbar.ColorbarBase(ax=cax5, cmap=mycmap, norm=Normalize(vmin=-100, vmax=100) ,
+    cb5 = mpl.colorbar.ColorbarBase(ax=cax5, cmap=mycmap_flux, norm=Normalize(vmin=-100, vmax=100) ,
                                     orientation='horizontal', ticks=np.arange(-100,101,25))
     cb5.ax.set_xticklabels(np.arange(-100, 101,25), fontsize=9)
     ax5.text(0.9, -0.125, '$W/m^2$', fontsize=10,transform=ax5.transAxes, ha='center')
@@ -271,7 +273,7 @@ def make_plot(rerun=False):
     ax4.text(-0.02, 1.05, 'c', fontsize=14, transform=ax4.transAxes, fontweight='bold')
     ax6.text(-0.02, 1.05, 'd', fontsize=14, transform=ax6.transAxes, fontweight='bold')
 
-    plt.savefig('../figure/figure_sensible_heat0218.png',dpi=300,bbox_inches='tight')
+    plt.savefig('../figure/figure_sensible_heat0702.png',dpi=300,bbox_inches='tight')
     print('figure saved')
 
 if __name__=='__main__':
