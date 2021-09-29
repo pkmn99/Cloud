@@ -31,12 +31,11 @@ def f(p, x):
     """Basic linear regression 'model' for use with ODR"""
     return (p[0] * x) + p[1]
 
+# Process fluxnet data from collaborator, 
+# extract cloud effect for paried sites and assign region label 
 def load_flux_data(rerun=False,remove_outlier=True):
     if rerun:
-       # cloud=xr.open_dataset('../data/results/potential_1deg_noelemask.nc')# 1deg cloud effect
         cloud=xr.open_dataset('../data/results/xu/potential_one_deg_0207.nc')# 1deg cloud effect
-       # cloud=xr.open_dataset('../data/results/xu/MODIS_potential_1deg_noelemask.nc')# 1deg cloud effect
-         
         flux_h=pd.read_csv('../data/H_diff.csv') # Add two pair amazon flux sites
         # Add mean lat/lon for paired sites
         flux_h.loc[:,'lat_mean']=flux_h.loc[:,['pair_open_lat','pair_forest_lat']].mean(axis=1)
@@ -75,11 +74,10 @@ def load_flux_data(rerun=False,remove_outlier=True):
         flux_h = pd.read_csv('../data/results/my_flux_h0207.csv')
         print('read csv data from saved file')
     if remove_outlier:
-       # flux_h = flux_h[(flux_h.dif<150)&(flux_h.dif>-90)]
         flux_h = flux_h[(flux_h.dif<150)&(flux_h.dif>-100)]
     return flux_h
 
-# Add ellipse for key cloud supression region
+# Add ellipse for key cloud inhibition region
 def add_circle(ax):
     # Amazon
     e1 = Ellipse(xy=(-60, -15),
@@ -104,7 +102,6 @@ def make_plot(rerun=False):
     h_sa=xr.open_dataset('../data/results/xu/HG_det.nc')
     h_clm=xr.open_dataset('../data/results/xu/CLM_SH.nc')
     flux_h=load_flux_data(rerun=rerun)
-  #  mycmap=get_myjet_cmap()
     mycmap=get_myjet_cmap(levels=np.arange(-0.15,0.151,0.025)) # use levels for color
     mycmap_flux=get_myjet_cmap(levels=np.arange(-100,101,25)) # use levels for color
 
@@ -244,16 +241,11 @@ def make_plot(rerun=False):
     ind=flux_h['dif']>-200
 
     p = geometric_mean_regression(flux_h.loc[ind,['dif','cloud_diff']].dropna().values)
-   # X = sm.add_constant(flux_h.loc[ind, 'dif'])
-   # # model = sm.OLS(flux_h.loc[ind,'cloud_diff'], X, missing='drop')
-   # model_rlm = sm.RLM(flux_h['cloud_diff'], X, missing='drop')
-   # results = model_rlm.fit()
 
     pos6 = [0.65, 0.15, 0.35, 0.5] # [left, bottom, width, height]
     ax6 = fig.add_axes(pos6)
 
     with sns.axes_style("ticks"):
-     #   sns.scatterplot(x="dif", y="cloud_diff", data=flux_h,s=45, ax=ax6)
         sns.scatterplot(x="dif", y="cloud_diff", data=flux_h,hue='region',ax=ax6)
     ax6.legend(ax6.get_legend_handles_labels()[0][1::], ['Europe','North America','Australia','Amazon'],frameon=False)
 
@@ -265,7 +257,6 @@ def make_plot(rerun=False):
     ax6.set_ylabel('$\Delta$Cloud', labelpad=0)
     ax6.set_xlabel('$\Delta$H ($W/m^2$)')
     ax6.set_title('Paired Flux site')
-#    ax6.text(0.1, 0.2, '1000*y=%.2fx+%.2f'%(p[0]*1000,p[1]*1000), fontsize=8, transform=ax6.transAxes)
     ax6.text(0.1, 0.1, r'$\rho$=%.2f, $\it{p}$=%.2f'%(p[2][0],p[2][1]), fontsize=10, transform=ax6.transAxes)
 
     ax1.text(-0.02, 1.05, 'a', fontsize=14, transform=ax1.transAxes, fontweight='bold')
@@ -273,9 +264,10 @@ def make_plot(rerun=False):
     ax4.text(-0.02, 1.05, 'c', fontsize=14, transform=ax4.transAxes, fontweight='bold')
     ax6.text(-0.02, 1.05, 'd', fontsize=14, transform=ax6.transAxes, fontweight='bold')
 
-    plt.savefig('../figure/figure_sensible_heat0702.png',dpi=300,bbox_inches='tight')
+   # plt.savefig('../figure/figure_sensible_heat0702.png',dpi=300,bbox_inches='tight')
+    plt.savefig('../figure/figure3.pdf',bbox_inches='tight')
     print('figure saved')
 
 if __name__=='__main__':
     make_plot(rerun=False)
-#    flux_h=load_flux_data(rerun=True)
+#    flux_h=load_flux_data(rerun=True) # reprocess flux sensible heat data for plotting
