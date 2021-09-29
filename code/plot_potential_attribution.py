@@ -12,10 +12,6 @@ from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 # Revised figure 1 by merging attribution part with the potential effect 
 
-#def get_myjet_cmap():
-#    mycmap=np.genfromtxt('../data/jet_blue_red_colormap.csv',delimiter=',')
-#    return ListedColormap(mycmap)
-
 def get_myjet_cmap(levels=False,left_offset=0,right_offset=0,cmap='myjet'):
     if cmap=='myjet':
         mycmap=np.genfromtxt('../data/jet_blue_red_colormap.csv', delimiter=',')
@@ -35,7 +31,6 @@ def get_myjet_cmap(levels=False,left_offset=0,right_offset=0,cmap='myjet'):
 
 # Reproduce latitude statistics from matlab, data should be numpy data array
 def lat_pattern(data):
-#     data = ds.deltacloud.values
     lat_width = 1 # default is 1 degree  
     dim=data.shape #[3600,7200] # row, coloum
     res=180/dim[0]
@@ -89,11 +84,12 @@ def make_plot():
     msgatt=xr.open_dataset('../data/results/xu/MSG_attribution0908.nc')
     
     # Calculate some variables
-#    pot_lat=lat_pattern(ds05.potential.values)
+    # latitudinal statistics for cloud enhancment and inhibition
     pot_pos_lat=lat_pattern(ds05.potential.where(ds05.potential>0).values)
     pot_neg_lat=lat_pattern(ds05.potential.where(ds05.potential<0).values)
     pot_pos_lat_msg=lat_pattern(msg14.potential.where(msg14.potential>0).values)
     pot_neg_lat_msg=lat_pattern(msg14.potential.where(msg14.potential<0).values)
+
     # range of bin includes left and exclude right, and include rightmost edge
     f1=np.histogram(msghour.local_hour.values.flatten(), bins=range(0,25), density=True) 
     v1=np.round(f1[0][0:6].sum()*100,0)
@@ -121,7 +117,6 @@ def make_plot():
                            cmap=mycmap,add_colorbar=False, rasterized=True)
     ax1.set_ylabel('')
     ax1.set_xlabel('')
-    
     ax1.set_extent([-180, 180, -60, 80])
     set_lat_lon(ax1, range(-120,180,60), range(-60,80,30), label=True,pad=0.05, fontsize=10)
     ax1.coastlines()
@@ -140,7 +135,7 @@ def make_plot():
     ax2.plot(pot_neg_lat[2,:],pot_neg_lat[0,:],lw=1,color='blue',label='Negative')
     ax2.fill_betweenx(pot_neg_lat[0,:], pot_neg_lat[4,:], pot_neg_lat[5,:], facecolor='#D2D2D2',edgecolor='none', alpha=0.8, label='Negative')
 
-    # Add positive/negative cloud effect percentage
+    # Add positive/negative cloud effect percentage number
     ax2.text(-0.05, -47, '%d%%'%neg_modis,ha='center',color='blue',fontsize=9)
     ax2.text(0.05, -47, '%d%%'%pos_modis,ha='center',color='red',fontsize=9)
 
@@ -171,11 +166,11 @@ def make_plot():
     ax3.set_extent([-70, 60, -20, 45])
     ax3.coastlines()
     set_lat_lon(ax3, range(-60,61,60), range(-30,61,30), label=True,pad=0.05, fontsize=10)
-    ### Panel C MSG latitude pattern
+
+    ### Panel D MSG latitude pattern
     pos3b = [ax3.get_position().x1, ax3.get_position().y0, 0.15, ax3.get_position().height]
     ax3b= fig.add_axes(pos3b)
 
-### Panel D MSG latitude pattern
     # positive impact
     ax3b.plot(pot_pos_lat_msg[2,:],pot_pos_lat_msg[0,:],lw=1,color='red',label='Positive')
     ax3b.fill_betweenx(pot_pos_lat_msg[0,:], pot_pos_lat_msg[4,:], pot_pos_lat_msg[5,:], facecolor='#D2AAAA',edgecolor='none', alpha=0.8, label='Positive')
@@ -205,7 +200,7 @@ def make_plot():
     ax3b.tick_params(labelright=True,labelleft=False)
     ax3b.tick_params(axis="x",direction='in', top=True, right=True)
     
-    ###################Panel D  MSG max impat hour 
+    ###################Panel E MSG max impact hours 
     pos4 = [0.6, 0.225, 0.3, 0.5] # [left, bottom, width, height]
     ax4 = fig.add_axes(pos4, projection=ccrs.PlateCarree())
     #mycmap2=ListedColormap(['yellow', 'lime','orangered','blue'])
@@ -220,12 +215,7 @@ def make_plot():
     
     ax4_bar = ax4.inset_axes([0.3,0.1,0.3,0.25])
     
-    ##########Panel D inset bar
-#    v1=np.round(f1[0][0:6].sum()*100,0)
-#    v2=np.round(f1[0][6:12].sum()*100,0)
-#    v3=np.round(f1[0][12:18].sum()*100,0)
-#    v4=np.round(f1[0][18:24].sum()*100,0)
-    
+    ##########Panel D inset bar chart
     ax4_bar.bar(f1[1][0:-1]+0.5,f1[0]*100,width=0.75, color=['yellow']*6 + ['lime']*6+['orangered']*6+['blue']*6)
     ax4_bar.text(2.5, 5, '%d'%v1+'%',ha='center',color='yellow',fontsize=9)
     ax4_bar.text(8.5, 8,'%d'%v2+'%',ha='center',color='lime',fontsize=9)
@@ -241,7 +231,7 @@ def make_plot():
     ax4_bar.spines['right'].set_visible(False)
     ax4_bar.spines['left'].set_visible(False)
 
-    ################ Panel E
+    ################ Panel F attribution MODIS
     discmap5 = mpl.colors.ListedColormap(['red', 'blue','yellow', 'lime','tab:pink'])
     v1=np.round((att5.attribution==1).sum()/(att5.attribution>0).sum()*100,0)
     v2=np.round((att5.attribution==2).sum()/(att5.attribution>0).sum()*100,0)
@@ -255,7 +245,7 @@ def make_plot():
     ax5.coastlines()
     ax5.text(0.45, 0.05, 'MODIS', fontsize=12,transform=ax5.transAxes,ha='center',fontweight='bold')
 
-    ################ Panel F
+    ################ Panel F attribution MSG
     pos6 = [0.05, 0.02, 0.17, 0.17] # [left, bottom, width, height]
     ax6 = fig.add_axes(pos6, projection=ccrs.PlateCarree())
     msgatt.attribution.where(msgatt.attribution!=0).plot(cmap=discmap5, ax=ax6, add_colorbar=False, rasterized=True) # tab10, set3
@@ -263,7 +253,6 @@ def make_plot():
     ax6.coastlines()
     ax6.text(0.25, 0.05, 'MSG', fontsize=12,transform=ax6.transAxes,fontweight='bold')
    # ax6.set_title('MSG')
-
     
     # Add colorbar
     # Colorbar for panel A
@@ -272,8 +261,8 @@ def make_plot():
     cb1 = mpl.colorbar.ColorbarBase(ax=cax1, cmap=mycmap, norm=Normalize(vmin=-0.15, vmax=0.15),
                                     orientation='horizontal', ticks=np.arange(-0.15, 0.16, 0.05)) #cmap=plt.get_cmap('hot')
     cb1.set_label('$\Delta$Cloud', fontsize=12)
-    cax1.text(-0.1,0.5,'Less clouds\n over forest', transform=cax1.transAxes, color='b',ha='center',va='center',fontsize=10)
-    cax1.text(1.1,0.5,'More clouds\n over forest',transform=cax1.transAxes, color='r',ha='center',va='center',fontsize=10)
+    cax1.text(-0.1,0.5,'Less clouds\n over forests', transform=cax1.transAxes, color='b',ha='center',va='center',fontsize=10)
+    cax1.text(1.1,0.5,'More clouds\n over forests',transform=cax1.transAxes, color='r',ha='center',va='center',fontsize=10)
     
 #    # Colorbar for panel C
 #    cbar3_pos = [ax3.get_position().x1+0.025, ax3.get_position().y0, 0.01, ax3.get_position().height]
@@ -282,15 +271,14 @@ def make_plot():
 #                                                                 orientation='vertical', ticks=np.arange(-0.15, 0.16, 0.05)) #cmap=plt.get_cmap('hot')
 #    cb3.set_label('$\Delta$Cloud', fontsize=12,labelpad=0)
     
-    # Colorbar for panel D
+    # Colorbar for panel E
     cbar4_pos = [ax4.get_position().x1+0.025, ax4.get_position().y0, 0.01, ax4.get_position().height]
     cax4 = fig.add_axes(cbar4_pos)
     cb4 = mpl.colorbar.ColorbarBase(ax=cax4, cmap=mycmap2, norm=Normalize(vmin=0, vmax=24),
                                     orientation='vertical', ticks=np.arange(0, 25, 6)) #cmap=plt.get_cmap('hot') 
-    
     cb4.set_label('Local time', fontsize=12)
 
-    # Colorbar for panel EF
+    # Colorbar for panel F
     cbar5_pos = [ax5.get_position().x1+0.025, ax5.get_position().y0, 0.01, ax5.get_position().height]
     cax5 = fig.add_axes(cbar5_pos)
     cb5 = mpl.colorbar.ColorbarBase(ax=cax5, cmap=discmap5, norm=Normalize(vmin=1, vmax=5) ,
@@ -313,10 +301,10 @@ def make_plot():
     ax3.set_title('Potential cloud effect ($\Delta$Cloud)')
     ax3.text(0.25, 0.05, 'MSG', fontsize=12,transform=ax3.transAxes,fontweight='bold')
     ax4.set_title('Local hour of maximum effect')
-    ax5.set_title('Attribution of potential cloud effect of forest')
+    ax5.set_title('Attribution of potential cloud effect of forests')
     
-    # plt.savefig('../figure/figure1.pdf', bbox_inches='tight')
-    plt.savefig('../figure/figure1_0627.png', dpi=300, bbox_inches='tight')
+    plt.savefig('../figure/figure1.pdf', bbox_inches='tight')
+#    plt.savefig('../figure/figure1_0730.png', dpi=300, bbox_inches='tight')
     print('Figure saved')
 
 if __name__ == '__main__':
