@@ -1,11 +1,8 @@
-#import pandas as pd
 import matplotlib.pyplot as plt
-#from matplotlib.colors import ListedColormap, Normalize
 from matplotlib.colors import Normalize
 import xarray as xr
 import numpy as np
 import cartopy.crs as ccrs
-#import cartopy.feature as cfeature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import matplotlib as mpl
 import statsmodels.api as sm
@@ -61,11 +58,11 @@ def plot_yearly_change(ds,ax):
  #   ax.tick_params(axis='y', which='both', direction='in', right=True, labelright=True, left=False,labelleft=False)
     ax.tick_params(axis='y', direction='in', colors='b')
 
-def plot_trend_line(ax, ds, x=0.4):
+def plot_trend_line(ax, ds, x=0.45):
     # Trend line
-    b, v = linear_fit(100*ds.mean(dim=['lat','lon']))
+    b,p,v = linear_fit(100*ds.mean(dim=['lat','lon']))
     ax.plot(range(2002,2019,1),v,color='r')
-    ax.text(x,0.05,'Trend:%.3f'%np.round(b,3),ha='center',color='r',transform=ax.transAxes)
+    ax.text(x,0.05,'Trend:%.3f p:%.2f'%(np.round(b,3),p),ha='center',color='r',transform=ax.transAxes)
 
 def plot_yearly_tree(ds,ax):
     ds.mean(dim=['lat','lon']).plot(ax=ax,color='g',linestyle='--')
@@ -100,7 +97,7 @@ def linear_fit(ds):
     X = sm.add_constant(ds.time)
     model = sm.OLS(ds.values, X)
     results = model.fit()
-    return results.params[1],results.predict()
+    return results.params[1],results.pvalues[1],results.predict()
 
     #Reduce width for 1 to 3 columns 
 def move_left(ax, offset=0.05):
@@ -112,10 +109,7 @@ def make_plot():
     loss_yearly=xr.open_dataset('../data/results/xu/forest_loss_effect_year_0207.nc')
     trend=xr.open_dataset('../data/results/xu/forest_loss_impact_based_on_trend_0207.nc')
     loss=xr.open_dataset('../data/results/xu/MODIS_loss_effect_0207.nc')
-#    loss_yearly['time']=list(range(2002,2019))# temporaray fix for time
 
-   # floss=xr.open_dataset('../data/results/forestloss_2018_05deg.nc') # old data
-   # floss=xr.open_dataset('../data/results/net_loss_2018_05deg.nc')
     floss=xr.open_dataset('../data/results/loss_2018_05deg.nc') # gross loss
     floss_diff_yearly=xr.open_dataset('../data/results/xu/loss_diff_yearly_05deg.nc')
     floss_base_diff=xr.open_dataset('../data/results/xu/loss_basetree_diff_05deg.nc')
@@ -123,7 +117,9 @@ def make_plot():
 #    tree_diff.time.values=range(2001,2019,1) 
 
     # jet cmap
-    mycmap=get_myjet_cmap()
+    mycmap=get_myjet_cmap(levels=np.arange(-0.15,0.151,0.025))
+    myhot=get_myjet_cmap(levels=np.arange(-0.8,0.01,0.1),cmap='hot')
+
 
     fig = plt.figure(figsize=[10,10])
     
@@ -136,7 +132,7 @@ def make_plot():
     axbig1 = fig.add_subplot(gs[0:2, 0:2],projection=ccrs.PlateCarree())
     axbig2 = fig.add_subplot(gs[0:2, 2:4],projection=ccrs.PlateCarree())
     
-    floss.forest_loss.plot(ax=axbig1,cmap='hot',rasterized=True, add_colorbar=False)
+    floss.forest_loss.plot(levels=np.arange(-0.8,0.1,0.1),ax=axbig1,cmap=myhot,rasterized=True, add_colorbar=False)
     loss.loss_effect.plot(ax=axbig2,cmap=mycmap,vmin=-0.15, vmax=0.15,rasterized=True, add_colorbar=False)
     axbig1.set_extent([-180, 180, -60, 80])
     axbig2.set_extent([-180, 180, -60, 80])
@@ -164,15 +160,13 @@ def make_plot():
     # Add colorbar to big plot
     cbarbig1_pos = [axbig1.get_position().x0, axbig1.get_position().y0-0.025, axbig1.get_position().width, 0.01]
     caxbig1 = fig.add_axes(cbarbig1_pos)
-    cmap0, norm = norm_cmap(cmap='hot', vmin=-0.8, vmax=0)
-    cbbig1 = mpl.colorbar.ColorbarBase(ax=caxbig1, cmap=cmap0.cmap, norm=norm,orientation='horizontal', ticks=np.arange(-0.8, 0, 0.2)) #cmap=plt.get_cmap('hot')
+    cbbig1 = mpl.colorbar.ColorbarBase(ax=caxbig1, cmap=myhot, norm=Normalize(vmax=0,vmin=-0.8),orientation='horizontal', ticks=np.arange(-0.8, 0, 0.2)) #cmap=plt.get_cmap('hot')
     cbbig1.ax.set_yticklabels(np.arange(-0.8, 0.1,0.2),fontsize=10)
     cbbig1.set_label('Forest loss fraction', fontsize=12)
     
     cbarbig2_pos = [axbig2.get_position().x0, axbig2.get_position().y0-0.025, axbig2.get_position().width, 0.01]
     caxbig2 = fig.add_axes(cbarbig2_pos)
-    # cmap0, norm = norm_cmap(cmap='hot', vmin=-0.8, vmax=0)
-    cbbig2 = mpl.colorbar.ColorbarBase(ax=caxbig2, cmap=mycmap, norm=Normalize(vmin=-0.25, vmax=0.25),
+    cbbig2 = mpl.colorbar.ColorbarBase(ax=caxbig2, cmap=mycmap, norm=Normalize(vmin=-0.2, vmax=0.2),
                                        orientation='horizontal', ticks=np.arange(-0.2, 0.21, 0.1)) 
     cbbig2.ax.set_yticklabels(np.arange(-0.2, 0.21, 0.1),fontsize=10)
     cbbig2.set_label(r'$\Delta\mathrm{Cloud_{loss}}$', fontsize=12)
@@ -205,11 +199,11 @@ def make_plot():
 
     
     # Amazon
-    plot_pcolor_map(floss.forest_loss.where(floss.forest_loss!=0).loc[-20:0,-70:-40], ax=ax11,vminmax=[-0.8,0], cmap='hot')
+    plot_pcolor_map(floss.forest_loss.where(floss.forest_loss!=0).loc[-20:0,-70:-40], ax=ax11,vminmax=[-0.8,0], cmap=myhot)
     plot_pcolor_map(loss.loss_effect.where(floss.forest_loss<-0.05).loc[-20:0,-70:-40], ax=ax12, vminmax=[-0.15,0.15], cmap=mycmap)
     plot_pcolor_map(trend.loss_impact.where(floss.forest_loss<-0.05).loc[-20:0,-70:-40], ax=ax13, vminmax=[-0.015,0.015], cmap=mycmap)
     plot_yearly_change(loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,-20:0,-70:-40],ax=ax14)
-    plot_trend_line(ax14, loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,-20:0,-70:-40])
+    plot_trend_line(ax14, loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,-20:0,-70:-40], x=0.48)
     plot_yearly_tree(tree_diff.where(floss.forest_loss<-0.05).loc[-20:0,-70:-40,2002::], ax14sec)
     
     set_lat_lon(ax11, range(-70,-39,10), range(-20,1,10), label=True)
@@ -217,11 +211,11 @@ def make_plot():
     set_lat_lon(ax13, range(-70,-39,10), range(-20,1,10))
 
     # Indonisia
-    plot_pcolor_map(floss.forest_loss.where(floss.forest_loss!=0).loc[-5:15,95:125], ax=ax21,vminmax=[-0.8,0], cmap='hot')
+    plot_pcolor_map(floss.forest_loss.where(floss.forest_loss!=0).loc[-5:15,95:125], ax=ax21,vminmax=[-0.8,0], cmap=myhot)
     plot_pcolor_map(loss.loss_effect.where(floss.forest_loss<-0.05).loc[-5:15,95:125], ax=ax22, vminmax=[-0.15,0.15], cmap=mycmap)
     plot_pcolor_map(trend.loss_impact.where(floss.forest_loss<-0.05).loc[-5:15,95:125], ax=ax23, vminmax=[-0.015,0.015], cmap=mycmap)
     plot_yearly_change(loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,-5:15,95:125], ax=ax24)
-    plot_trend_line(ax24, loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,-5:15,95:125],x=0.45)
+    plot_trend_line(ax24, loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,-5:15,95:125],x=0.50)
     plot_yearly_tree(tree_diff.where(floss.forest_loss<-0.05).loc[-5:15,95:125,2002::], ax24sec)
     
     set_lat_lon(ax21, range(95,126,10), range(-5,14,10), label=True)
@@ -229,11 +223,11 @@ def make_plot():
     set_lat_lon(ax23, range(95,126,10), range(-5,14,10))
 
     #   Southeast America
-    plot_pcolor_map(floss.forest_loss.where(floss.forest_loss!=0).loc[25:40,-95:-72.5], ax=ax31,vminmax=[-0.8,0], cmap='hot')
+    plot_pcolor_map(floss.forest_loss.where(floss.forest_loss!=0).loc[25:40,-95:-72.5], ax=ax31,vminmax=[-0.8,0], cmap=myhot)
     plot_pcolor_map(loss.loss_effect.where(floss.forest_loss<-0.05).loc[25:40,-95:-72.5], ax=ax32, vminmax=[-0.15,0.15], cmap=mycmap)
     plot_pcolor_map(trend.loss_impact.where(floss.forest_loss<-0.05).loc[25:40,-95:-72.5], ax=ax33, vminmax=[-0.015,0.015], cmap=mycmap)
     plot_yearly_change(loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,25:40,-95:-72.5], ax=ax34)
-    plot_trend_line(ax34, loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,25:40,-95:-72.5],x=0.38)
+    plot_trend_line(ax34, loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,25:40,-95:-72.5],x=0.5)
     plot_yearly_tree(tree_diff.where(floss.forest_loss<-0.05).loc[25:40,-95:-72.5,2002::], ax34sec)
     
     set_lat_lon(ax31, range(-95,-73,10), range(25,41,10), label=True)
@@ -241,11 +235,11 @@ def make_plot():
     set_lat_lon(ax33, range(-95,-73,10), range(25,41,10))
     
     # East Siberia
-    plot_pcolor_map(floss.forest_loss.where(floss.forest_loss!=0).loc[55:70,115:137.5], ax=ax41,vminmax=[-0.8,0], cmap='hot')
+    plot_pcolor_map(floss.forest_loss.where(floss.forest_loss!=0).loc[55:70,115:137.5], ax=ax41,vminmax=[-0.8,0], cmap=myhot)
     plot_pcolor_map(loss.loss_effect.where(floss.forest_loss<-0.05).loc[55:70,115:137.5], ax=ax42, vminmax=[-0.15,0.15], cmap=mycmap)
     plot_pcolor_map(trend.loss_impact.where(floss.forest_loss<-0.05).loc[55:70,115:137.5], ax=ax43, vminmax=[-0.015,0.015], cmap=mycmap)
     plot_yearly_change(loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,55:70,115:137.5], ax=ax44)
-    plot_trend_line(ax44, loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,55:70,115:137.5],x=0.3)
+    plot_trend_line(ax44, loss_yearly.forest_loss_effect.where(floss.forest_loss<-0.05).loc[2002:2018,55:70,115:137.5],x=0.37)
     plot_yearly_tree(tree_diff.where(floss.forest_loss<-0.05).loc[55:70,115:137.5,2002::], ax44sec)
     set_lat_lon(ax41, range(115,137,10), range(55,71,10), label=True)
     set_lat_lon(ax42, range(115,137,10), range(55,71,10))
@@ -272,12 +266,6 @@ def make_plot():
     ax13.set_title('Cloud impact trend')
     ax14.set_title('Regional cloud impact')
     
-   # # Add region names in column 4
-   # ax14.text(0.05,0.88,'Amazon' ,transform=ax14.transAxes)
-   # ax24.text(0.05,0.55,'Indonesia' ,transform=ax24.transAxes)
-   # ax34.text(0.2,0.1,'Southeast US' ,transform=ax34.transAxes)
-   # ax44.text(0.05,0.05,'East Siberia' ,transform=ax44.transAxes)
-
     # Add region names on the left side of figure 
     ax11.text(-0.21,0.5,'Amazon',transform=ax11.transAxes,rotation=90,va='center',fontsize=11)
     ax21.text(-0.21,0.5,'Indonesia',transform=ax21.transAxes,rotation=90,va='center',fontsize=11)
@@ -313,14 +301,14 @@ def make_plot():
     # Colorbar for regional plot
     cbar41_pos = [ax41.get_position().x0, ax41.get_position().y0-0.035, ax41.get_position().width, 0.01]
     cax41 = fig.add_axes(cbar41_pos)
-    cmap0, norm = norm_cmap(cmap='hot', vmin=-0.8, vmax=0)
+    cmap0, norm = norm_cmap(cmap=myhot, vmin=-0.8, vmax=0)
     cb41 = mpl.colorbar.ColorbarBase(ax=cax41, cmap=cmap0.cmap, norm=norm,orientation='horizontal', ticks=np.arange(-0.8, 0, 0.2)) #cmap=plt.get_cmap('hot')
     cb41.ax.set_yticklabels(np.arange(-0.8, 0.1,0.2),fontsize=10)
     cb41.set_label('Forest loss fraction', fontsize=12)
     
     cbar42_pos = [ax42.get_position().x0, ax42.get_position().y0-0.035, ax42.get_position().width, 0.01]
     cax42 = fig.add_axes(cbar42_pos)
-    cb42 = mpl.colorbar.ColorbarBase(ax=cax42, cmap=mycmap, norm=Normalize(vmin=-0.25, vmax=0.25),
+    cb42 = mpl.colorbar.ColorbarBase(ax=cax42, cmap=mycmap, norm=Normalize(vmin=-0.2, vmax=0.2),
                                      orientation='horizontal', ticks=np.arange(-0.2, 0.21, 0.1)) #cmap=plt.get_cmap('hot')
     cb42.set_label('$\Delta\mathrm{Cloud_{loss}}$', fontsize=12)
     
@@ -340,8 +328,8 @@ def make_plot():
         else:
             plot_subplot_label(a, panel_txt[i])
        
-    plt.savefig('../figure/figure_floss0207.png',dpi=300,bbox_inches='tight')
-#    plt.savefig('../figure/figure_floss.pdf',bbox_inches='tight')
+#    plt.savefig('../figure/figure5.png',dpi=300,bbox_inches='tight')
+    plt.savefig('../figure/figure5.pdf',bbox_inches='tight')
     print('Figure saved')
 
 if __name__ == '__main__':
