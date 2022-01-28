@@ -113,7 +113,7 @@ def make_plot(rerun=False):
     cloud05.potential.plot(cmap=mycmap, vmin=-0.15,vmax=0.15, ax=ax1, add_colorbar=False, rasterized=True) 
     ax1.set_extent([-180, 180, -60, 80])
     ax1.coastlines()
-    ax1.set_title('Potential cloud effect ($\Delta$Cloud)')
+    ax1.set_title('Potential cloud effect')
 #    ax1.text(0.015, 0.6, '$\Delta$Cloud', fontsize=12,transform=ax1.transAxes)
     ax1.text(0.5, 0.05, 'MODIS', fontsize=12,transform=ax1.transAxes,ha='center',fontweight='bold')
     add_circle(ax1)
@@ -134,7 +134,7 @@ def make_plot(rerun=False):
                                                     orientation='vertical',ticks=np.arange(-0.15,0.16,0.05)) 
     cb1.ax.set_yticklabels([-0.15,-0.1,-0.05 ,0, 0.05,0.10, 0.15], fontsize=9)
     cax1.tick_params(axis="y",direction='out', left=True, labelleft=True, right=False, labelright=False, pad=0)
-    # cb1.set_label('$\Delta$Cloud', fontsize=10, labelpad=0)
+    cb1.set_label('$\Delta$Cloud', fontsize=10, labelpad=-40)
 
     ## Satellite panel
     pos2 = [0.05, 0.325, 0.5, 0.5] # [left, bottom, width, height]
@@ -145,7 +145,7 @@ def make_plot(rerun=False):
 
     ax2.set_extent([-180, 180, -60, 80])
     ax2.coastlines()
-    ax2.set_title('Sensible heat difference ($\Delta$H)')
+    ax2.set_title('Sensible heat difference')
 #    ax2.text(0.025, 0.05, '$\Delta$H', fontsize=12,transform=ax2.transAxes)
     ax2.text(0.5, 0.05, 'Satellite', fontsize=12,transform=ax2.transAxes ,ha='center',fontweight='bold')
     add_circle(ax2)
@@ -158,7 +158,7 @@ def make_plot(rerun=False):
     ax3.coastlines()
 #    ax3.text(0.025, 0.05, '$\Delta$H', fontsize=12,transform=ax3.transAxes)
     ax3.text(0.5, 0.05, 'CLM', fontsize=12,transform=ax3.transAxes, ha='center', fontweight='bold')
-    ax3.text(-0.05, 0.05, '$W/m^2$', fontsize=10,transform=ax3.transAxes, ha='center')
+#    ax3.text(-0.05, 0.05, '$W/m^2$', fontsize=10,transform=ax3.transAxes, ha='center')
     add_circle(ax3)
 
     # Add colorbar for CLM
@@ -169,6 +169,7 @@ def make_plot(rerun=False):
     cax3 = fig.add_axes(cbar3_pos)
     cb3 = mpl.colorbar.ColorbarBase(ax=cax3, cmap=mycmap, norm=Normalize(vmin=-50, vmax=50) ,
                                                     orientation='vertical',ticks=np.arange(-50,51,10))
+    cb3.set_label('$\Delta$H (W/$\mathrm{m^2}$)', fontsize=10, labelpad=-40)
     cb3.ax.set_yticklabels(np.arange(-50, 51,10), fontsize=9)
     cax3.tick_params(axis="y",direction='out', left=True, labelleft=True, right=False, labelright=False, pad=0)
 
@@ -201,7 +202,7 @@ def make_plot(rerun=False):
     
     ax4.text(0.5, 0.05, 'Paired flux site', fontsize=12, transform=ax4.transAxes, ha='center', fontweight='bold')
 #    ax4.text(0.01, 0.035, '$\Delta$H', fontsize=12,transform=ax4.transAxes)
-    ax4.text(0.75, 1.075, 'Sensible heat difference ($\Delta$H)', fontsize=12, transform=ax4.transAxes, ha='center')
+    ax4.text(0.75, 1.075, 'Sensible heat difference', fontsize=12, transform=ax4.transAxes, ha='center')
     
     ##  Flux location 2  panel: EU
     pos5 = [0.8, 0.8, 0.25, 0.25] # [left, bottom, width, height]
@@ -234,7 +235,8 @@ def make_plot(rerun=False):
     cb5 = mpl.colorbar.ColorbarBase(ax=cax5, cmap=mycmap_flux, norm=Normalize(vmin=-100, vmax=100) ,
                                     orientation='horizontal', ticks=np.arange(-100,101,25))
     cb5.ax.set_xticklabels(np.arange(-100, 101,25), fontsize=9)
-    ax5.text(0.9, -0.125, '$W/m^2$', fontsize=10,transform=ax5.transAxes, ha='center')
+#    ax5.text(0.9, -0.125, '$W/m^2$', fontsize=10,transform=ax5.transAxes, ha='center')
+    cb5.set_label('$\Delta$H (W/$\mathrm{m^2}$)', fontsize=10, labelpad=0)
 
     ##  Flux H and cloud effect panel
     # Estimate regression line
@@ -255,7 +257,7 @@ def make_plot(rerun=False):
     ax6.set_xlim([-100,130])
     ax6.set_ylim([-0.06,0.06])
     ax6.set_ylabel('$\Delta$Cloud', labelpad=0)
-    ax6.set_xlabel('$\Delta$H ($W/m^2$)')
+    ax6.set_xlabel('$\Delta$H (W/$\mathrm{m^2}$)')
     ax6.set_title('Paired Flux site')
     ax6.text(0.1, 0.1, r'$\rho$=%.2f, $\it{p}$=%.2f'%(p[2][0],p[2][1]), fontsize=10, transform=ax6.transAxes)
 
@@ -264,8 +266,8 @@ def make_plot(rerun=False):
     ax4.text(-0.02, 1.05, 'c', fontsize=14, transform=ax4.transAxes, fontweight='bold')
     ax6.text(-0.02, 1.05, 'd', fontsize=14, transform=ax6.transAxes, fontweight='bold')
 
-   # plt.savefig('../figure/figure_sensible_heat0702.png',dpi=300,bbox_inches='tight')
-    plt.savefig('../figure/figure3.pdf',bbox_inches='tight')
+    plt.savefig('../figure/figure3_1208.png',dpi=300,bbox_inches='tight')
+   # plt.savefig('../figure/figure3_1208.pdf',bbox_inches='tight')
     print('figure saved')
 
 if __name__=='__main__':
