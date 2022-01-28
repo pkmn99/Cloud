@@ -61,8 +61,8 @@ def plot_yearly_change(ds,ax):
 def plot_trend_line(ax, ds, x=0.45):
     # Trend line
     b,p,v = linear_fit(100*ds.mean(dim=['lat','lon']))
-    ax.plot(range(2002,2019,1),v,color='r')
-    ax.text(x,0.05,'Trend:%.3f p:%.2f'%(np.round(b,3),p),ha='center',color='r',transform=ax.transAxes)
+    ax.plot(range(2002,2019,1),v,color='b',lw=1,alpha=0.5)
+    ax.text(x,0.05,'Trend:%.3f p:%.2f'%(np.round(b,3),p),ha='center',color='b',transform=ax.transAxes,alpha=0.5)
 
 def plot_yearly_tree(ds,ax):
     ds.mean(dim=['lat','lon']).plot(ax=ax,color='g',linestyle='--')
@@ -328,8 +328,8 @@ def make_plot():
         else:
             plot_subplot_label(a, panel_txt[i])
        
-#    plt.savefig('../figure/figure5.png',dpi=300,bbox_inches='tight')
-    plt.savefig('../figure/figure5.pdf',bbox_inches='tight')
+    plt.savefig('../figure/figure5_1208.png',dpi=300,bbox_inches='tight')
+#    plt.savefig('../figure/figure5_1208.pdf',bbox_inches='tight')
     print('Figure saved')
 
 if __name__ == '__main__':
